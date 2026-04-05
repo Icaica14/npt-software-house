@@ -38,8 +38,26 @@ Led by autonomous agent teams with specialized roles:
 - Low organizational noise
 - Strong execution and shipping discipline
 
-## Continuous Improvement
+## Autonomous Agent Operating System
 
+NPT operates as a **self-governing agent team** with clear roles, responsibilities, and communication protocols.
+
+### Leadership & Delegation
+- **CEO** leads the organization: delegates, monitors, communicates, unblocks, escalates
+- **CTO** leads technical execution: architects, delegates to specialists, synthesizes
+- Others execute their specialties and escalate when blocked
+
+See [AGENTS.md](AGENTS.md) for detailed role instructions.
+
+### Continuous Communication
+- **No meetings, all-async coordination** through issue comments
+- **CEO posts daily standup** every heartbeat (every 5 minutes) for org transparency
+- **@Mentions trigger action** only when someone needs to act now
+- **Status visible in issues** — blockers, dependencies, progress all documented
+
+See [COMMUNICATION_PROTOCOL.md](COMMUNICATION_PROTOCOL.md) for the full protocol.
+
+### Continuous Improvement
 NPT operates a **continuous self-audit and improvement loop** where agents regularly:
 1. Audit completed work against delivery standards
 2. Identify friction and process friction
