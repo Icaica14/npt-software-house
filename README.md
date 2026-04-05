@@ -73,7 +73,7 @@ FastAPI auto-generates OpenAPI docs at `http://localhost:8000/docs`.
 ## Running tests
 
 ```bash
-pytest tests/
+pytest backend/tests/
 ```
 
 ---
@@ -143,6 +143,54 @@ The app proxies `/api` requests to `http://localhost:8000` (set in `package.json
 3. On submit, answers are POSTed to `POST /api/quiz/submit`.
 4. `ResultsPage` displays total score, inattention/hyperactivity breakdown, risk level with colour-coding, interpretation text, and a medical disclaimer.
 5. User can retake the quiz.
+
+---
+
+## Example curl requests
+
+### List all questions
+
+```bash
+curl http://localhost:8000/api/quiz/questions
+```
+
+### Get a single question
+
+```bash
+curl http://localhost:8000/api/quiz/questions/1
+```
+
+### Submit quiz answers
+
+```bash
+curl -X POST http://localhost:8000/api/quiz/submit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "answers": {
+      "1": 3, "2": 2, "3": 1, "4": 4, "5": 2,
+      "6": 3, "7": 1, "8": 2, "9": 3, "10": 4,
+      "11": 2, "12": 3, "13": 1, "14": 2, "15": 3,
+      "16": 4, "17": 2, "18": 1, "19": 3, "20": 2
+    }
+  }'
+```
+
+Expected response:
+
+```json
+{
+  "inattention_score": 25,
+  "hyperactivity_score": 23,
+  "total_score": 48,
+  "risk_level": "moderate"
+}
+```
+
+### Health check
+
+```bash
+curl http://localhost:8000/health
+```
 
 ---
 
