@@ -83,7 +83,8 @@ def test_submit_response_has_required_fields():
     resp = client.post("/api/quiz/submit", json={"answers": ALL_ONES_ANSWERS})
     assert resp.status_code == 200
     data = resp.json()
-    assert set(data.keys()) == {"total_score", "inattention_score", "hyperactivity_score", "risk_level"}
+    required = {"total_score", "inattention_score", "hyperactivity_score", "risk_level", "consistency", "reliability"}
+    assert required.issubset(set(data.keys()))
 
 
 def test_submit_missing_question_returns_422():
@@ -92,10 +93,12 @@ def test_submit_missing_question_returns_422():
     assert resp.status_code == 422
 
 
-def test_submit_extra_questions_returns_422():
-    answers = {str(i): 1 for i in range(1, 22)}  # 21 answers
+def test_submit_extra_questions_accepted():
+    # Answers for ids 1-21 where 21 is a distractor — should succeed (distractors filtered)
+    answers = {str(i): 1 for i in range(1, 22)}
     resp = client.post("/api/quiz/submit", json={"answers": answers})
-    assert resp.status_code == 422
+    assert resp.status_code == 200
+    assert resp.json()["total_score"] == 20
 
 
 def test_submit_out_of_range_answer_returns_422():
@@ -219,3 +222,83 @@ def test_model_info_is_valid_json():
     assert resp.status_code == 200
     reparsed = json.loads(resp.text)
     assert isinstance(reparsed, dict)
+
+
+# ---------------------------------------------------------------------------
+# DHD-20: Question Randomization & Anti-Gaming Measures (8 new tests)
+# ---------------------------------------------------------------------------
+
+def test_get_questions_endpoint():
+    """GET /api/quiz/questions returns 200 with shuffled=True."""
+    resp = client.get("/api/quiz/questions")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "questions" in data
+    assert data["shuffled"] is True
+
+
+def test_get_questions_includes_distractors():
+    """Response has distractor questions and correct counts."""
+    resp = client.get("/api/quiz/questions")
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["distractor_count"] > 0
+    assert data["scoring_count"] == 20
+    distractor_ids = {q["id"] for q in data["questions"] if q["category"] == "distractor"}
+    assert len(distractor_ids) == data["distractor_count"]
+
+
+def test_submit_quiz_valid():
+    """POST /api/quiz/submit with 20 valid answers returns 200."""
+    resp = client.post("/api/quiz/submit", json={"answers": MIXED_ANSWERS})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "total_score" in data
+
+
+def test_submit_quiz_includes_consistency_check():
+    """Response from POST /api/quiz/submit includes consistency field."""
+    resp = client.post("/api/quiz/submit", json={"answers": MIXED_ANSWERS})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "consistency" in data
+    consistency = data["consistency"]
+    assert "is_consistent" in consistency
+    assert "warning" in consistency
+
+
+def test_submit_quiz_includes_cronbach_alpha():
+    """Response from POST /api/quiz/submit includes reliability with cronbach_alpha."""
+    resp = client.post("/api/quiz/submit", json={"answers": MIXED_ANSWERS})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert "reliability" in data
+    reliability = data["reliability"]
+    assert "cronbach_alpha" in reliability
+    assert "interpretation" in reliability
+    assert 0.0 <= reliability["cronbach_alpha"] <= 1.0
+    assert reliability["interpretation"] in ("Good", "Adequate", "Poor")
+
+
+def test_submit_quiz_detects_all_ones():
+    """All-ones answers should trigger a consistency warning."""
+    resp = client.post("/api/quiz/submit", json={"answers": ALL_ONES_ANSWERS})
+    assert resp.status_code == 200
+    data = resp.json()
+    assert data["consistency"]["is_consistent"] is False
+    assert data["consistency"]["warning"] is not None
+
+
+def test_submit_quiz_filters_extra_answers():
+    """Providing >20 answers (including distractors) is filtered to 20 scoring answers."""
+    answers = {str(i): 2 for i in range(1, 26)}  # ids 1-25, distractors 21-25 ignored
+    resp = client.post("/api/quiz/submit", json={"answers": answers})
+    assert resp.status_code == 200
+    assert resp.json()["total_score"] == 40  # 20 scoring × 2
+
+
+def test_submit_quiz_invalid_answer_count():
+    """Fewer than 20 scoring answers returns a 4xx error."""
+    answers = {str(i): 1 for i in range(1, 15)}  # only 14 answers
+    resp = client.post("/api/quiz/submit", json={"answers": answers})
+    assert resp.status_code >= 400

@@ -7,12 +7,14 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from backend.api.quiz import (
+    DISTRACTOR_QUESTION_IDS,
     Question,
     ScoreResult,
     calculate_score_from_dict,
     get_model_info,
     get_question_by_id,
     get_shuffled_questions,
+    validate_response_consistency,
 )
 
 app = FastAPI(
@@ -33,7 +35,15 @@ app.add_middleware(
 def list_questions() -> dict:
     """Return all questions (20 scoring + 5 distractors) in shuffled order."""
     questions = get_shuffled_questions()
-    return {"questions": [q.model_dump() for q in questions], "shuffled": True}
+    q_list = [q.model_dump() for q in questions]
+    distractor_count = sum(1 for q in questions if q.id in DISTRACTOR_QUESTION_IDS)
+    scoring_count = len(questions) - distractor_count
+    return {
+        "questions": q_list,
+        "shuffled": True,
+        "distractor_count": distractor_count,
+        "scoring_count": scoring_count,
+    }
 
 
 @app.get("/api/quiz/questions/{question_id}", response_model=Question)
@@ -49,19 +59,38 @@ class SubmitRequest(BaseModel):
     answers: Dict[int, int]
 
 
-@app.post("/api/quiz/submit", response_model=ScoreResult)
-def submit_quiz(body: SubmitRequest) -> ScoreResult:
+@app.post("/api/quiz/submit")
+def submit_quiz(body: SubmitRequest) -> dict:
     """Accept answers for quiz questions and return a scored result.
 
     Body: ``{"answers": {"1": 3, "2": 2, ...}}`` — keys are question ids (1-25),
     values are 1-4.  Answers for distractor questions (ids 21-25) are accepted
     but ignored for scoring.  All 20 scoring questions (ids 1-20) must be present.
-    The response includes ``cronbach_alpha`` and ``consistency_warning`` fields.
+    Response includes ``consistency`` and ``reliability`` fields.
     """
     try:
-        return calculate_score_from_dict(body.answers)
+        # Extract only scoring answers (ignore distractors and any extra keys)
+        scoring_answers = {k: v for k, v in body.answers.items() if k not in DISTRACTOR_QUESTION_IDS}
+        result = calculate_score_from_dict(scoring_answers)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    scoring_list = [scoring_answers.get(i, body.answers.get(i)) for i in range(1, 21)]
+    consistency = validate_response_consistency(scoring_list)
+
+    alpha = result.cronbach_alpha
+    if alpha >= 0.7:
+        interpretation = "Good"
+    elif alpha >= 0.5:
+        interpretation = "Adequate"
+    else:
+        interpretation = "Poor"
+
+    return {
+        **result.model_dump(),
+        "consistency": consistency,
+        "reliability": {"cronbach_alpha": alpha, "interpretation": interpretation},
+    }
 
 
 @app.get("/api/quiz/model-info")
