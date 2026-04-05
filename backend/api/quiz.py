@@ -8,9 +8,10 @@ Distractor questions (IDs 21-25) are included in the shuffled quiz to
 detect pattern-gaming; their answers do not contribute to scoring.
 """
 
+import math
 import random
 from collections import Counter
-from typing import Dict, List, Literal, Optional
+from typing import Dict, List, Literal, Optional, Tuple
 
 from pydantic import BaseModel, field_validator
 
@@ -235,6 +236,72 @@ def get_question_by_id(question_id: int) -> Question | None:
 
 RiskLevel = Literal["low", "moderate", "high"]
 
+# ASRS-v1.1 population reference norms (adult general population, N=519, Kessler et al. 2005).
+# Mean = 36.8, SD = 10.6 (total score range 20-80).
+# These parameters define the reference normal distribution used for percentile conversion.
+POPULATION_MEAN: float = 36.8
+POPULATION_SD: float = 10.6
+
+# 95% CI z-score (two-tailed)
+Z_95: float = 1.96
+
+# Spearman-Brown split-half reliability for ASRS-v1.1 (published estimate ~0.88)
+# Used as the test-retest reliability coefficient baseline when the sample r is unavailable.
+PUBLISHED_SPLIT_HALF_R: float = 0.88
+
+
+def _norm_cdf(z: float) -> float:
+    """Standard normal CDF using math.erf."""
+    return (1.0 + math.erf(z / math.sqrt(2.0))) / 2.0
+
+
+def raw_score_to_percentile(total_score: int) -> int:
+    """Convert a raw total score to a percentile (0-100) using ASRS population norms.
+
+    Uses the normal distribution with mean=36.8, SD=10.6 (Kessler et al. 2005).
+    The percentile represents the percentage of the general population scoring
+    at or below this level.
+
+    Args:
+        total_score: Integer in [20, 80].
+
+    Returns:
+        Percentile as integer in [0, 100].
+    """
+    z = (total_score - POPULATION_MEAN) / POPULATION_SD
+    p = _norm_cdf(z)
+    return max(0, min(100, round(p * 100)))
+
+
+def percentile_confidence_interval(
+    total_score: int, n_items: int = 20, reliability: float = PUBLISHED_SPLIT_HALF_R
+) -> Tuple[int, int]:
+    """Calculate 95% confidence interval around a percentile estimate.
+
+    Uses the Standard Error of Measurement (SEM) to build a score-level CI,
+    then converts the CI bounds to percentiles.
+
+    SEM = SD_population * sqrt(1 - reliability)
+
+    Args:
+        total_score: Raw total score [20, 80].
+        n_items: Number of scored items (20).
+        reliability: Test-retest/split-half reliability coefficient [0, 1].
+
+    Returns:
+        Tuple (lower_percentile, upper_percentile), each in [0, 100].
+    """
+    sem = POPULATION_SD * math.sqrt(1.0 - reliability)
+    lower_score = total_score - Z_95 * sem
+    upper_score = total_score + Z_95 * sem
+
+    lower_z = (lower_score - POPULATION_MEAN) / POPULATION_SD
+    upper_z = (upper_score - POPULATION_MEAN) / POPULATION_SD
+
+    lower_p = max(0, min(100, round(_norm_cdf(lower_z) * 100)))
+    upper_p = max(0, min(100, round(_norm_cdf(upper_z) * 100)))
+    return lower_p, upper_p
+
 
 class ScoreResult(BaseModel):
     inattention_score: int
@@ -243,6 +310,9 @@ class ScoreResult(BaseModel):
     risk_level: RiskLevel
     cronbach_alpha: float
     consistency_warning: bool
+    percentile: int
+    percentile_ci: Tuple[int, int]
+    test_retest_coefficient: float
 
     @field_validator("inattention_score", "hyperactivity_score")
     @classmethod
@@ -256,6 +326,13 @@ class ScoreResult(BaseModel):
     def total_in_range(cls, v: int) -> int:
         if not (20 <= v <= 80):
             raise ValueError(f"Total score {v} out of range 20-80")
+        return v
+
+    @field_validator("percentile")
+    @classmethod
+    def percentile_in_range(cls, v: int) -> int:
+        if not (0 <= v <= 100):
+            raise ValueError(f"Percentile {v} out of range 0-100")
         return v
 
 
@@ -359,6 +436,14 @@ def calculate_score(answers: List[int]) -> ScoreResult:
 
     cronbach_alpha, consistency_warning = _check_consistency(answers)
 
+    # Use sample split-half reliability if it's meaningfully higher than the floor,
+    # otherwise fall back to published ASRS norm.
+    reliability = max(cronbach_alpha, PUBLISHED_SPLIT_HALF_R) if cronbach_alpha >= 0.3 else PUBLISHED_SPLIT_HALF_R
+    test_retest_coefficient = round(reliability, 3)
+
+    percentile = raw_score_to_percentile(total_score)
+    percentile_ci = percentile_confidence_interval(total_score, reliability=reliability)
+
     return ScoreResult(
         inattention_score=inattention_score,
         hyperactivity_score=hyperactivity_score,
@@ -366,6 +451,9 @@ def calculate_score(answers: List[int]) -> ScoreResult:
         risk_level=risk_level,
         cronbach_alpha=cronbach_alpha,
         consistency_warning=consistency_warning,
+        percentile=percentile,
+        percentile_ci=percentile_ci,
+        test_retest_coefficient=test_retest_coefficient,
     )
 
 

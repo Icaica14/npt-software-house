@@ -8,11 +8,15 @@ from backend.api.quiz import (
     DISTRACTOR_QUESTIONS,
     SCORING_QUESTION_IDS,
     DISTRACTOR_QUESTION_IDS,
+    POPULATION_MEAN,
+    POPULATION_SD,
     get_question_by_id,
     get_questions,
     get_shuffled_questions,
     calculate_score,
     calculate_score_from_dict,
+    raw_score_to_percentile,
+    percentile_confidence_interval,
     _check_consistency,
 )
 from backend.api.server import app
@@ -257,3 +261,94 @@ def test_distractors_ignored_for_score():
     assert r1.total_score == r2.total_score
     assert r1.inattention_score == r2.inattention_score
     assert r1.hyperactivity_score == r2.hyperactivity_score
+
+
+# --- Percentile and CI tests ---
+
+
+def test_percentile_at_population_mean():
+    """Score equal to population mean should be ~50th percentile."""
+    score = round(POPULATION_MEAN)
+    p = raw_score_to_percentile(score)
+    assert 45 <= p <= 55, f"Expected ~50th percentile at mean, got {p}"
+
+
+def test_percentile_low_score():
+    """Score of 20 (minimum) should be in a low percentile."""
+    p = raw_score_to_percentile(20)
+    assert 0 <= p <= 20, f"Min score should be low percentile, got {p}"
+
+
+def test_percentile_high_score():
+    """Score of 80 (maximum) should be in a high percentile."""
+    p = raw_score_to_percentile(80)
+    assert p >= 80, f"Max score should be high percentile, got {p}"
+
+
+def test_percentile_monotone():
+    """Higher raw scores must yield higher or equal percentiles."""
+    prev = raw_score_to_percentile(20)
+    for score in range(21, 81):
+        current = raw_score_to_percentile(score)
+        assert current >= prev, f"Percentile not monotone at score {score}"
+        prev = current
+
+
+def test_percentile_in_range():
+    """All scores in [20, 80] must yield a percentile in [0, 100]."""
+    for score in range(20, 81):
+        p = raw_score_to_percentile(score)
+        assert 0 <= p <= 100
+
+
+def test_percentile_ci_lower_le_upper():
+    """Lower CI bound must always be <= upper CI bound."""
+    for score in range(20, 81):
+        lo, hi = percentile_confidence_interval(score)
+        assert lo <= hi, f"CI inverted at score {score}: [{lo}, {hi}]"
+
+
+def test_percentile_ci_contains_point_estimate():
+    """95% CI should bracket the point-estimate percentile."""
+    for score in range(20, 81):
+        p = raw_score_to_percentile(score)
+        lo, hi = percentile_confidence_interval(score)
+        assert lo <= p <= hi, f"Point estimate {p} outside CI [{lo}, {hi}] at score {score}"
+
+
+def test_percentile_ci_width_reasonable():
+    """95% CI should be non-trivial for mid-range scores, and never wider than 60 points."""
+    # Check width only for scores in the middle range where clamping doesn't apply
+    for score in range(25, 56):
+        lo, hi = percentile_confidence_interval(score)
+        width = hi - lo
+        assert width >= 5, f"CI suspiciously narrow ({width}) at score {score}"
+        assert width <= 60, f"CI suspiciously wide ({width}) at score {score}"
+
+
+def test_submit_returns_percentile_fields():
+    """POST /api/quiz/submit response must include percentile, percentile_ci, test_retest_coefficient."""
+    answers = {str(i): 2 for i in range(1, 21)}
+    data = client.post("/api/quiz/submit", json={"answers": answers}).json()
+    assert "percentile" in data
+    assert "percentile_ci" in data
+    assert "test_retest_coefficient" in data
+    assert isinstance(data["percentile"], int)
+    assert isinstance(data["percentile_ci"], list)
+    assert len(data["percentile_ci"]) == 2
+    assert 0 <= data["percentile"] <= 100
+    assert isinstance(data["test_retest_coefficient"], float)
+    assert 0.0 <= data["test_retest_coefficient"] <= 1.0
+
+
+def test_calculate_score_percentile_fields():
+    """calculate_score must populate percentile fields correctly."""
+    answers = [2] * 20  # total=40
+    result = calculate_score(answers)
+    assert hasattr(result, "percentile")
+    assert hasattr(result, "percentile_ci")
+    assert hasattr(result, "test_retest_coefficient")
+    assert 0 <= result.percentile <= 100
+    lo, hi = result.percentile_ci
+    assert lo <= result.percentile <= hi
+    assert 0.0 <= result.test_retest_coefficient <= 1.0
