@@ -9,8 +9,12 @@ from backend.api.quiz import (
     add_distractor_questions,
     cronbach_alpha,
     validate_response_consistency,
+    percentile_from_raw_score,
+    confidence_interval_95,
+    test_retest_reliability,
     QUESTIONS,
     DISTRACTOR_QUESTION_IDS,
+    POPULATION_REFERENCE,
 )
 from backend.api.server import app
 
@@ -187,6 +191,65 @@ def test_api_quiz_questions_returns_shuffled():
     assert data.get("shuffled") is True
     ids = [q["id"] for q in data["questions"]]
     assert len(ids) >= 20
+
+
+# ---------------------------------------------------------------------------
+# DHD-14: Scientific Scoring & Percentile Calculation tests
+# ---------------------------------------------------------------------------
+
+def test_percentile_from_raw_score_low():
+    """Low raw score should yield low percentile."""
+    percentile = percentile_from_raw_score(20, POPULATION_REFERENCE["percentiles"])
+    assert 0 <= percentile <= 20
+
+
+def test_percentile_from_raw_score_high():
+    """High raw score should yield high percentile."""
+    percentile = percentile_from_raw_score(75, POPULATION_REFERENCE["percentiles"])
+    assert percentile >= 80
+
+
+def test_percentile_from_raw_score_middle():
+    """Score near mean should yield percentile near 50."""
+    mean_score = round(POPULATION_REFERENCE["mean"])
+    percentile = percentile_from_raw_score(mean_score, POPULATION_REFERENCE["percentiles"])
+    assert 35 <= percentile <= 65
+
+
+def test_confidence_interval_95_calculation():
+    """CI should have upper > lower and both in [0, 100]."""
+    lower, upper = confidence_interval_95(percentile=60, sample_size=2200, std_error=5.0)
+    assert 0 <= lower <= 100
+    assert 0 <= upper <= 100
+    assert upper > lower
+
+
+def test_test_retest_reliability_perfect():
+    """Identical answer sets should yield high reliability coefficient."""
+    answers = [1, 2, 3, 4, 2, 3, 1, 4, 2, 3, 1, 2, 3, 4, 2, 1, 3, 4, 2, 3]
+    coeff = test_retest_reliability(answers, answers)
+    assert coeff >= 0.99
+
+
+def test_test_retest_reliability_poor():
+    """Completely opposite answer sets should yield low reliability coefficient."""
+    set1 = [1] * 20
+    set2 = [4] * 20
+    coeff = test_retest_reliability(set1, set2)
+    assert 0.0 <= coeff <= 0.5
+
+
+def test_calculate_score_includes_percentile():
+    """calculate_score result must include percentile, percentile_ci, and test_retest_coefficient."""
+    answers = [2, 3, 1, 4, 2, 3, 1, 4, 2, 3, 1, 4, 2, 3, 1, 4, 2, 3, 1, 4]
+    result = calculate_score(answers)
+    assert hasattr(result, "percentile")
+    assert hasattr(result, "percentile_ci")
+    assert hasattr(result, "test_retest_coefficient")
+    assert 0 <= result.percentile <= 100
+    lower, upper = result.percentile_ci
+    assert upper >= lower
+    assert 0.0 <= result.test_retest_coefficient <= 1.0
 
 
 def test_api_quiz_submit_filters_distractors():

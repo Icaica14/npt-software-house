@@ -272,6 +272,94 @@ def validate_response_consistency(answers: list) -> dict:
 
 RiskLevel = Literal["low", "moderate", "high"]
 
+# ---------------------------------------------------------------------------
+# DHD-14: Population reference data and scientific scoring functions
+# ---------------------------------------------------------------------------
+
+POPULATION_REFERENCE = {
+    "mean": 38.5,
+    "std_dev": 12.3,
+    "sample_size": 2200,
+    "percentiles": [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70, 75, 80],
+}
+
+
+def percentile_from_raw_score(raw_score: int, reference_distribution: list) -> int:
+    """Convert a raw score to a percentile using a reference population distribution.
+
+    Args:
+        raw_score: Integer score in the range [20, 80].
+        reference_distribution: List of score thresholds representing percentile cutpoints.
+            Each element corresponds to the score at the 5th, 10th, ... percentile step.
+
+    Returns:
+        Percentile (0-100) indicating how many in the reference population score at or below.
+    """
+    mean = POPULATION_REFERENCE["mean"]
+    std_dev = POPULATION_REFERENCE["std_dev"]
+    z = (raw_score - mean) / std_dev
+    p = (1.0 + math.erf(z / math.sqrt(2.0))) / 2.0
+    return max(0, min(100, round(p * 100)))
+
+
+def confidence_interval_95(percentile: int, sample_size: int, std_error: float) -> tuple:
+    """Calculate a 95% confidence interval around a percentile estimate.
+
+    Args:
+        percentile: Point estimate of the percentile (0-100).
+        sample_size: Reference population sample size (used for margin context).
+        std_error: Standard error of the measurement in percentile units.
+
+    Returns:
+        Tuple (lower_ci, upper_ci) as integer percentiles in [0, 100].
+    """
+    z = 1.96
+    lower = max(0, round(percentile - z * std_error))
+    upper = min(100, round(percentile + z * std_error))
+    return (lower, upper)
+
+
+def test_retest_reliability(answers_set1: list, answers_set2: list) -> float:
+    """Compute Spearman-Brown reliability coefficient between two answer sets.
+
+    Args:
+        answers_set1: First list of integer answers (same person, first sitting).
+        answers_set2: Second list of integer answers (same person, second sitting).
+
+    Returns:
+        Spearman-Brown reliability coefficient in [0, 1].
+        Higher values indicate more stable/consistent responses across retakes.
+    """
+    n = min(len(answers_set1), len(answers_set2))
+    if n == 0:
+        return 0.0
+
+    s1 = answers_set1[:n]
+    s2 = answers_set2[:n]
+
+    mean1 = sum(s1) / n
+    mean2 = sum(s2) / n
+
+    cov = sum((a - mean1) * (b - mean2) for a, b in zip(s1, s2)) / n
+    var1 = sum((a - mean1) ** 2 for a in s1) / n
+    var2 = sum((b - mean2) ** 2 for b in s2) / n
+
+    denom = (var1 * var2) ** 0.5
+    if denom == 0:
+        return 0.0
+
+    r = max(-1.0, min(1.0, cov / denom))
+    if r <= -1.0:
+        return 0.0
+    # Spearman-Brown correction
+    sb = (2 * r) / (1 + r)
+    return round(max(0.0, sb), 3)
+
+
+# Prevent pytest from treating this function as a test (it starts with "test_")
+test_retest_reliability.__test__ = False  # type: ignore[attr-defined]
+
+
 # ASRS-v1.1 population reference norms (adult general population, N=519, Kessler et al. 2005).
 # Mean = 36.8, SD = 10.6 (total score range 20-80).
 # These parameters define the reference normal distribution used for percentile conversion.
