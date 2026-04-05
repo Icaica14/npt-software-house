@@ -1,5 +1,6 @@
 /**
- * ResultsPage — displays scored ADHD screening results.
+ * ResultsPage — enhanced ADHD screening results with model explanation,
+ * feature importance chart, confidence metric, resources, and PDF export.
  *
  * Props:
  *   result (object, required)
@@ -9,7 +10,10 @@
  *     Called when the user clicks "Retake Quiz".
  */
 
-import React from 'react';
+import React, { useState } from 'react';
+import { generatePDFReport, computeConfidence } from '../utils/reportGenerator';
+
+/* ─── Constants ─────────────────────────────────────────────────────────── */
 
 const RISK_META = {
   low: {
@@ -17,27 +21,30 @@ const RISK_META = {
     color: '#065f46',
     bg: '#d1fae5',
     border: '#6ee7b7',
-    text: 'Your responses suggest few symptoms associated with ADHD at this time.',
+    text: 'Your responses suggest few symptoms associated with ADHD at this time. Continue monitoring your wellbeing and revisit if anything changes.',
   },
   moderate: {
     label: 'Moderate Risk',
     color: '#92400e',
     bg: '#fef3c7',
     border: '#fcd34d',
-    text:
-      'Your responses suggest some symptoms associated with ADHD. Consider discussing these results with a healthcare provider.',
+    text: 'Your responses suggest some symptoms consistent with ADHD. Consider discussing these results with a healthcare provider — early awareness is a positive step.',
   },
   high: {
-    label: 'High Risk',
+    label: 'Elevated Risk',
     color: '#991b1b',
     bg: '#fee2e2',
     border: '#fca5a5',
-    text:
-      'Your responses suggest several symptoms associated with ADHD. We recommend consulting a qualified healthcare professional for a full evaluation.',
+    text: 'Your responses suggest several symptoms consistent with ADHD. A professional evaluation can give you clear answers and open the door to effective support.',
   },
 };
 
-const ADHD_RESOURCES = [
+const RESOURCES = [
+  {
+    name: 'Psychology Today — Find a Therapist',
+    url: 'https://www.psychologytoday.com/us/therapists/adhd',
+    description: 'Search for ADHD-specialised clinicians near you.',
+  },
   {
     name: 'CHADD (Children and Adults with ADHD)',
     url: 'https://chadd.org',
@@ -50,17 +57,373 @@ const ADHD_RESOURCES = [
   },
 ];
 
-const s = {
+/* ─── Sub-components ─────────────────────────────────────────────────────── */
+
+/** Horizontal bar chart for a single subscale. */
+function FeatureBar({ label, value, max, color, ariaLabel }) {
+  const pct = Math.round((value / max) * 100);
+  return (
+    <div style={{ marginBottom: '1rem' }} aria-label={ariaLabel}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.35rem' }}>
+        <span style={{ fontSize: '0.88rem', fontWeight: 600, color: '#374151' }}>{label}</span>
+        <span style={{ fontSize: '0.88rem', color: '#6b7280' }}>
+          {value} / {max} &nbsp;<span style={{ color, fontWeight: 700 }}>({pct}%)</span>
+        </span>
+      </div>
+      <div
+        role="progressbar"
+        aria-valuenow={value}
+        aria-valuemin={0}
+        aria-valuemax={max}
+        aria-label={ariaLabel}
+        style={{
+          background: '#f3f4f6',
+          borderRadius: '6px',
+          height: '14px',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            width: `${pct}%`,
+            height: '100%',
+            background: color,
+            borderRadius: '6px',
+            transition: 'width 0.8s ease',
+          }}
+        />
+      </div>
+    </div>
+  );
+}
+
+/** Circular confidence badge. */
+function ConfidenceBadge({ pct }) {
+  const radius = 32;
+  const circ = 2 * Math.PI * radius;
+  const dash = (pct / 100) * circ;
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+      <svg width="88" height="88" viewBox="0 0 88 88" aria-hidden="true">
+        <circle cx="44" cy="44" r={radius} fill="none" stroke="#e5e7eb" strokeWidth="8" />
+        <circle
+          cx="44"
+          cy="44"
+          r={radius}
+          fill="none"
+          stroke="#2563eb"
+          strokeWidth="8"
+          strokeDasharray={`${dash} ${circ}`}
+          strokeLinecap="round"
+          transform="rotate(-90 44 44)"
+          style={{ transition: 'stroke-dasharray 1s ease' }}
+        />
+        <text x="44" y="48" textAnchor="middle" fontSize="15" fontWeight="bold" fill="#1e40af">
+          {pct}%
+        </text>
+      </svg>
+      <div>
+        <div style={{ fontSize: '1rem', fontWeight: 700, color: '#1e40af' }}>
+          {pct}% confident
+        </div>
+        <div style={{ fontSize: '0.82rem', color: '#6b7280', lineHeight: 1.5, maxWidth: '280px' }}>
+          How clearly your responses align with established ADHD symptom patterns.
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** Collapsible section. */
+function Section({ id, title, children, defaultOpen = true }) {
+  const [open, setOpen] = useState(defaultOpen);
+  return (
+    <section aria-labelledby={id} style={{ marginBottom: '1.5rem' }}>
+      <button
+        id={id}
+        onClick={() => setOpen((o) => !o)}
+        aria-expanded={open}
+        style={{
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          background: 'none',
+          border: 'none',
+          borderBottom: '1px solid #e5e7eb',
+          paddingBottom: '0.5rem',
+          marginBottom: open ? '1rem' : 0,
+          cursor: 'pointer',
+          textAlign: 'left',
+        }}
+      >
+        <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e3a8a' }}>{title}</span>
+        <span style={{ fontSize: '1rem', color: '#6b7280', userSelect: 'none' }} aria-hidden="true">
+          {open ? '▲' : '▼'}
+        </span>
+      </button>
+      {open && <div>{children}</div>}
+    </section>
+  );
+}
+
+/* ─── Main component ─────────────────────────────────────────────────────── */
+
+export default function ResultsPage({ result, onRetake }) {
+  const { total_score, inattention_score, hyperactivity_score, risk_level } = result;
+  const meta = RISK_META[risk_level] || RISK_META.moderate;
+  const confidence = computeConfidence(total_score, risk_level);
+  const [pdfLoading, setPdfLoading] = useState(false);
+
+  function handleDownloadPDF() {
+    setPdfLoading(true);
+    try {
+      generatePDFReport({ ...result, confidence });
+    } finally {
+      setTimeout(() => setPdfLoading(false), 1000);
+    }
+  }
+
+  const nextSteps = getNextSteps(risk_level);
+
+  return (
+    <div style={styles.container}>
+      <div style={styles.wrapper}>
+
+        {/* Page heading */}
+        <header style={styles.heading}>
+          <div style={styles.headingTitle}>Your Screening Results</div>
+          <div style={styles.headingSubtitle}>
+            Based on your responses — not a clinical diagnosis
+          </div>
+        </header>
+
+        <main id="main-content">
+          <div style={styles.card} aria-label="Quiz results">
+
+            {/* ── Risk banner ── */}
+            <section style={styles.riskBanner(risk_level)} aria-label={`Risk level: ${meta.label}`}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <div style={styles.riskLabel(risk_level)}>{meta.label}</div>
+                  <p style={styles.riskText}>{meta.text}</p>
+                </div>
+                <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                  <div
+                    style={styles.totalScore}
+                    aria-label={`Total score: ${total_score} out of 80`}
+                  >
+                    {total_score}
+                    <span style={styles.totalScoreSuffix} aria-hidden="true"> / 80</span>
+                  </div>
+                  <div style={styles.totalLabel}>Total Score</div>
+                </div>
+              </div>
+            </section>
+
+            {/* ── Subscale breakdown ── */}
+            <Section id="subscale-heading" title="Subscale Breakdown">
+              <div
+                style={styles.scoreRow}
+                aria-label="Subscale scores"
+              >
+                <div
+                  style={styles.subscale('#dbeafe')}
+                  aria-label={`Inattention score: ${inattention_score} out of 40`}
+                >
+                  <div style={styles.subscaleValue}>{inattention_score}</div>
+                  <div style={styles.subscaleLabel}>
+                    Inattention<br />
+                    <span aria-hidden="true" style={{ fontWeight: 400, color: '#9ca3af' }}>(max 40)</span>
+                  </div>
+                </div>
+                <div
+                  style={styles.subscale('#fce7f3')}
+                  aria-label={`Hyperactivity score: ${hyperactivity_score} out of 40`}
+                >
+                  <div style={styles.subscaleValue}>{hyperactivity_score}</div>
+                  <div style={styles.subscaleLabel}>
+                    Hyperactivity<br />
+                    <span aria-hidden="true" style={{ fontWeight: 400, color: '#9ca3af' }}>(max 40)</span>
+                  </div>
+                </div>
+              </div>
+
+              <FeatureBar
+                label="Inattention"
+                value={inattention_score}
+                max={40}
+                color="#3b82f6"
+                ariaLabel={`Inattention: ${inattention_score} out of 40`}
+              />
+              <FeatureBar
+                label="Hyperactivity / Impulsivity"
+                value={hyperactivity_score}
+                max={40}
+                color="#ec4899"
+                ariaLabel={`Hyperactivity: ${hyperactivity_score} out of 40`}
+              />
+              <FeatureBar
+                label="Combined Total"
+                value={total_score}
+                max={80}
+                color="#6366f1"
+                ariaLabel={`Combined total: ${total_score} out of 80`}
+              />
+              <p style={styles.smallNote}>
+                Inattention questions measure focus, organisation, and follow-through.
+                Hyperactivity/Impulsivity questions measure restlessness, interrupting, and impulsive behaviour.
+              </p>
+            </Section>
+
+            {/* ── Confidence metric ── */}
+            <Section id="confidence-heading" title="Assessment Confidence">
+              <ConfidenceBadge pct={confidence} />
+              <p style={{ ...styles.smallNote, marginTop: '0.75rem' }}>
+                Confidence reflects how far your score falls from the nearest risk threshold.
+                Scores clearly within one range yield higher confidence; borderline scores yield lower confidence.
+              </p>
+            </Section>
+
+            {/* ── How This Works ── */}
+            <Section id="how-heading" title="How This Works" defaultOpen={false}>
+              <p style={styles.bodyText}>
+                This tool uses an 18-question self-report screener based on DSM-5 criteria —
+                the same diagnostic framework used by clinicians. Nine questions assess{' '}
+                <strong>Inattention</strong> (e.g., difficulty sustaining attention, losing things,
+                forgetfulness) and nine assess{' '}
+                <strong>Hyperactivity/Impulsivity</strong> (e.g., restlessness, interrupting, excessive talking).
+              </p>
+              <p style={{ ...styles.bodyText, marginTop: '0.6rem' }}>
+                Each answer is scored 0 (Never) to 4 (Very Often), producing subscale totals of 0–36,
+                normalised here to 0–40 for clarity, with a combined total of 0–80.
+              </p>
+              <div style={styles.thresholdTable} aria-label="Risk thresholds">
+                {[
+                  { range: '0 – 29', label: 'Low Risk', color: '#065f46', bg: '#d1fae5' },
+                  { range: '30 – 49', label: 'Moderate Risk', color: '#92400e', bg: '#fef3c7' },
+                  { range: '50 – 80', label: 'Elevated Risk', color: '#991b1b', bg: '#fee2e2' },
+                ].map(({ range, label, color, bg }) => (
+                  <div
+                    key={label}
+                    style={{ ...styles.thresholdRow, background: bg, borderColor: color + '40' }}
+                  >
+                    <span style={{ fontWeight: 700, color }}>{label}</span>
+                    <span style={{ color: '#374151' }}>{range}</span>
+                  </div>
+                ))}
+              </div>
+            </Section>
+
+            {/* ── Next Steps ── */}
+            <Section id="nextsteps-heading" title="Professional Next Steps">
+              <ol style={{ paddingLeft: '1.25rem', margin: 0 }}>
+                {nextSteps.map((step, i) => (
+                  <li
+                    key={i}
+                    style={{ fontSize: '0.9rem', color: '#374151', lineHeight: 1.65, marginBottom: '0.5rem' }}
+                  >
+                    {step}
+                  </li>
+                ))}
+              </ol>
+            </Section>
+
+            {/* ── Resources ── */}
+            <Section id="resources-heading" title="Resources">
+              {RESOURCES.map((r) => (
+                <div key={r.url} style={styles.resourceItem}>
+                  <a
+                    href={r.url}
+                    style={styles.resourceLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={`${r.name} (opens in new tab)`}
+                  >
+                    {r.name} ↗
+                  </a>
+                  <span style={styles.resourceDesc}>{r.description}</span>
+                </div>
+              ))}
+            </Section>
+
+            {/* ── Disclaimer ── */}
+            <div style={styles.disclaimer} role="note" aria-label="Medical disclaimer">
+              <span style={styles.disclaimerBold}>Not a medical diagnosis.</span>{' '}
+              This screening tool is for informational purposes only. ADHD diagnosis requires a
+              comprehensive evaluation by a qualified healthcare professional, including clinical
+              interview, behaviour rating scales, and review of medical and developmental history.
+            </div>
+
+            {/* ── Actions ── */}
+            <div style={styles.actions}>
+              <button
+                style={styles.pdfBtn}
+                onClick={handleDownloadPDF}
+                disabled={pdfLoading}
+                aria-label="Download a PDF report of your results"
+              >
+                {pdfLoading ? 'Preparing…' : '⬇ Download PDF Report'}
+              </button>
+              <button
+                style={styles.retakeBtn}
+                onClick={onRetake}
+                aria-label="Retake the quiz from the beginning"
+              >
+                Retake Quiz
+              </button>
+            </div>
+
+          </div>
+        </main>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Helpers ──────────────────────────────────────────────────────────────── */
+
+function getNextSteps(risk_level) {
+  const shared = [
+    'Track your daily challenges in a journal to help any future evaluation.',
+    'Learn about ADHD through reputable resources like CHADD and ADDitude Magazine.',
+  ];
+  if (risk_level === 'low') {
+    return [
+      'Continue monitoring your wellbeing and revisit this screener if symptoms change.',
+      ...shared,
+    ];
+  }
+  if (risk_level === 'moderate') {
+    return [
+      'Schedule a conversation with your primary care physician and share these results.',
+      'Ask for a referral to a psychologist or psychiatrist who specialises in adult ADHD.',
+      'Prepare a list of specific situations where symptoms affect your daily life.',
+      ...shared,
+    ];
+  }
+  return [
+    'Schedule a comprehensive evaluation with a licensed psychologist or psychiatrist.',
+    'Bring this report and a symptom log to your appointment.',
+    'Ask your provider about neuropsychological testing for a thorough assessment.',
+    'Consider informing a trusted family member or colleague for an additional perspective.',
+    ...shared,
+  ];
+}
+
+/* ─── Styles ─────────────────────────────────────────────────────────────── */
+
+const styles = {
   container: {
     minHeight: '100vh',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    justifyContent: 'center',
-    padding: '1.5rem',
+    padding: '2rem 1rem 3rem',
+    background: '#f0f4f8',
   },
   wrapper: {
-    maxWidth: '540px',
+    maxWidth: '620px',
     width: '100%',
   },
   heading: {
@@ -68,26 +431,30 @@ const s = {
     marginBottom: '1.5rem',
   },
   headingTitle: {
-    fontSize: '1.6rem',
+    fontSize: '1.7rem',
     fontWeight: 800,
     color: '#1e3a8a',
     letterSpacing: '-0.02em',
     lineHeight: 1.2,
+  },
+  headingSubtitle: {
+    fontSize: '0.88rem',
+    color: '#6b7280',
+    marginTop: '0.3rem',
   },
   card: {
     background: '#fff',
     borderRadius: '16px',
     padding: '2rem',
     width: '100%',
-    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1), 0 0 0 1px rgba(0,0,0,0.04)',
+    boxShadow: '0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -2px rgba(0,0,0,0.1)',
   },
   riskBanner: (risk) => ({
     background: RISK_META[risk].bg,
     border: `1px solid ${RISK_META[risk].border}`,
     borderRadius: '12px',
-    padding: '1rem 1.25rem',
-    marginBottom: '1.5rem',
-    textAlign: 'center',
+    padding: '1.25rem',
+    marginBottom: '1.75rem',
   }),
   riskLabel: (risk) => ({
     display: 'inline-block',
@@ -96,32 +463,39 @@ const s = {
     background: RISK_META[risk].color,
     color: '#fff',
     fontWeight: 700,
-    fontSize: '0.85rem',
-    letterSpacing: '0.04em',
+    fontSize: '0.8rem',
+    letterSpacing: '0.05em',
     textTransform: 'uppercase',
     marginBottom: '0.5rem',
   }),
+  riskText: {
+    fontSize: '0.88rem',
+    color: '#374151',
+    lineHeight: 1.6,
+    maxWidth: '380px',
+    marginTop: '0.35rem',
+  },
   totalScore: {
-    fontSize: '3.5rem',
+    fontSize: '3rem',
     fontWeight: 800,
     color: '#111827',
     lineHeight: 1,
   },
   totalScoreSuffix: {
-    fontSize: '1.3rem',
+    fontSize: '1.2rem',
     color: '#9ca3af',
     fontWeight: 500,
   },
   totalLabel: {
-    fontSize: '0.85rem',
+    fontSize: '0.8rem',
     color: '#6b7280',
-    marginTop: '0.25rem',
+    marginTop: '0.2rem',
     fontWeight: 500,
   },
   scoreRow: {
     display: 'flex',
     gap: '1rem',
-    marginBottom: '1.5rem',
+    marginBottom: '1.25rem',
   },
   subscale: (bg) => ({
     flex: 1,
@@ -143,11 +517,29 @@ const s = {
     marginTop: '0.35rem',
     lineHeight: 1.4,
   },
-  interpretation: {
-    fontSize: '0.95rem',
+  bodyText: {
+    fontSize: '0.9rem',
     color: '#374151',
     lineHeight: 1.65,
-    marginBottom: '1.25rem',
+  },
+  smallNote: {
+    fontSize: '0.8rem',
+    color: '#9ca3af',
+    lineHeight: 1.55,
+  },
+  thresholdTable: {
+    marginTop: '0.75rem',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.4rem',
+  },
+  thresholdRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    padding: '0.5rem 0.75rem',
+    borderRadius: '8px',
+    border: '1px solid',
+    fontSize: '0.88rem',
   },
   disclaimer: {
     background: '#f9fafb',
@@ -157,20 +549,11 @@ const s = {
     fontSize: '0.82rem',
     color: '#6b7280',
     lineHeight: 1.6,
-    marginBottom: '1.5rem',
+    marginBottom: '1.25rem',
   },
   disclaimerBold: {
     fontWeight: 700,
     color: '#374151',
-  },
-  resources: {
-    marginBottom: '1.5rem',
-  },
-  resourcesHeading: {
-    fontSize: '0.9rem',
-    fontWeight: 700,
-    color: '#374151',
-    marginBottom: '0.75rem',
   },
   resourceItem: {
     display: 'flex',
@@ -192,6 +575,23 @@ const s = {
     fontSize: '0.8rem',
     color: '#6b7280',
   },
+  actions: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.75rem',
+  },
+  pdfBtn: {
+    width: '100%',
+    padding: '0.85rem',
+    background: '#fff',
+    color: '#1e40af',
+    border: '2px solid #1e40af',
+    borderRadius: '8px',
+    fontSize: '1rem',
+    fontWeight: 600,
+    cursor: 'pointer',
+    transition: 'background 0.15s, color 0.15s',
+  },
   retakeBtn: {
     width: '100%',
     padding: '0.85rem',
@@ -206,104 +606,3 @@ const s = {
     transition: 'opacity 0.15s',
   },
 };
-
-export default function ResultsPage({ result, onRetake }) {
-  const { total_score, inattention_score, hyperactivity_score, risk_level } = result;
-  const meta = RISK_META[risk_level];
-
-  return (
-    <div style={s.container}>
-      <div style={s.wrapper}>
-        <div style={s.heading} aria-hidden="true">
-          <div style={s.headingTitle}>Your Results</div>
-        </div>
-
-        <main id="main-content">
-          <div style={s.card} aria-label="Quiz results">
-
-            {/* Risk banner */}
-            <section
-              style={s.riskBanner(risk_level)}
-              aria-label={`Risk level: ${meta.label}`}
-            >
-              <div style={s.riskLabel(risk_level)}>{meta.label}</div>
-              <div>
-                <span style={s.totalScore} aria-label={`Total score: ${total_score} out of 80`}>
-                  {total_score}
-                  <span style={s.totalScoreSuffix} aria-hidden="true"> / 80</span>
-                </span>
-                <div style={s.totalLabel}>Total Score</div>
-              </div>
-            </section>
-
-            {/* Subscale breakdown */}
-            <div
-              style={s.scoreRow}
-              aria-label="Subscale scores"
-            >
-              <div
-                style={s.subscale('#dbeafe')}
-                aria-label={`Inattention score: ${inattention_score} out of 40`}
-              >
-                <div style={s.subscaleValue}>{inattention_score}</div>
-                <div style={s.subscaleLabel}>Inattention<br /><span aria-hidden="true">(max 40)</span></div>
-              </div>
-              <div
-                style={s.subscale('#fce7f3')}
-                aria-label={`Hyperactivity score: ${hyperactivity_score} out of 40`}
-              >
-                <div style={s.subscaleValue}>{hyperactivity_score}</div>
-                <div style={s.subscaleLabel}>Hyperactivity<br /><span aria-hidden="true">(max 40)</span></div>
-              </div>
-            </div>
-
-            {/* Interpretation */}
-            <p style={s.interpretation}>{meta.text}</p>
-
-            {/* Disclaimer */}
-            <div
-              style={s.disclaimer}
-              role="note"
-              aria-label="Medical disclaimer"
-            >
-              <span style={s.disclaimerBold}>Not a medical diagnosis.</span>{' '}
-              This screening tool is for informational purposes only and does not
-              constitute a clinical diagnosis. Please consult a qualified healthcare
-              provider for a full evaluation.
-            </div>
-
-            {/* Learn More Resources */}
-            <section style={s.resources} aria-labelledby="resources-heading">
-              <div id="resources-heading" style={s.resourcesHeading}>
-                Learn More About ADHD
-              </div>
-              {ADHD_RESOURCES.map((resource) => (
-                <div key={resource.url} style={s.resourceItem}>
-                  <a
-                    href={resource.url}
-                    style={s.resourceLink}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    aria-label={`${resource.name} (opens in new tab)`}
-                  >
-                    {resource.name} ↗
-                  </a>
-                  <span style={s.resourceDesc}>{resource.description}</span>
-                </div>
-              ))}
-            </section>
-
-            {/* Retake */}
-            <button
-              style={s.retakeBtn}
-              onClick={onRetake}
-              aria-label="Retake the quiz from the beginning"
-            >
-              Retake Quiz
-            </button>
-          </div>
-        </main>
-      </div>
-    </div>
-  );
-}
