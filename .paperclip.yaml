@@ -85,6 +85,9 @@ projects:
   3d-civil-works:
     color: "#14b8a6"
     status: "in_progress"
+  adhd-assessment-dashboard:
+    color: "#f59e0b"
+    status: "in_progress"
   onboarding:
     color: "#6366f1"
     status: "in_progress"
@@ -98,5 +101,6 @@ sidebar:
     - "quality-gate"
     - "ceo"
   projects:
+    - "adhd-assessment-dashboard"
     - "3d-civil-works"
     - "onboarding"
