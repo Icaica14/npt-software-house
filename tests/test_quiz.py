@@ -102,3 +102,52 @@ def test_health_endpoint():
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
+
+
+# --- Submit endpoint tests ---
+
+ALL_ONES = {str(i): 1 for i in range(1, 21)}  # total=20 → low risk
+
+
+def test_submit_valid_answers():
+    response = client.post("/api/quiz/submit", json={"answers": ALL_ONES})
+    assert response.status_code == 200
+    data = response.json()
+    assert data["total_score"] == 20
+    assert data["inattention_score"] == 10
+    assert data["hyperactivity_score"] == 10
+    assert data["risk_level"] == "low"
+
+
+def test_submit_high_risk():
+    answers = {str(i): 4 for i in range(1, 21)}  # total=80 → high
+    response = client.post("/api/quiz/submit", json={"answers": answers})
+    assert response.status_code == 200
+    assert response.json()["risk_level"] == "high"
+
+
+def test_submit_moderate_risk():
+    # total=50 → moderate (36-60)
+    answers = {str(i): 3 for i in range(1, 11)}
+    answers.update({str(i): 2 for i in range(11, 21)})
+    response = client.post("/api/quiz/submit", json={"answers": answers})
+    assert response.status_code == 200
+    assert response.json()["risk_level"] == "moderate"
+
+
+def test_submit_missing_answers_returns_422():
+    partial = {str(i): 2 for i in range(1, 15)}  # only 14 answers
+    response = client.post("/api/quiz/submit", json={"answers": partial})
+    assert response.status_code == 422
+
+
+def test_submit_invalid_answer_value_returns_422():
+    bad = {str(i): 2 for i in range(1, 21)}
+    bad["5"] = 9  # out of range
+    response = client.post("/api/quiz/submit", json={"answers": bad})
+    assert response.status_code == 422
+
+
+def test_submit_empty_body_returns_422():
+    response = client.post("/api/quiz/submit", json={})
+    assert response.status_code == 422

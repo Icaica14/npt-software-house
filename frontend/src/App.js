@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import QuizFlow from './components/QuizFlow';
+import ResultsPage from './components/ResultsPage';
 
 const styles = {
   container: {
@@ -10,66 +11,43 @@ const styles = {
     justifyContent: 'center',
     padding: '1rem',
   },
-  resultCard: {
-    background: '#fff',
-    borderRadius: '16px',
-    padding: '2rem',
-    maxWidth: '480px',
-    width: '100%',
-    boxShadow: '0 4px 24px rgba(79, 70, 229, 0.12)',
-    textAlign: 'center',
-  },
-  heading: {
-    fontSize: '1.5rem',
-    fontWeight: 700,
-    color: '#4f46e5',
-    marginBottom: '1rem',
-  },
-  score: {
-    fontSize: '3rem',
-    fontWeight: 800,
-    color: '#312e81',
-    margin: '0.5rem 0',
-  },
-  retakeBtn: {
-    marginTop: '1.5rem',
-    padding: '0.75rem 2rem',
-    background: '#4f46e5',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    fontSize: '1rem',
-    fontWeight: 600,
-    cursor: 'pointer',
-  },
 };
 
 export default function App() {
   const [result, setResult] = useState(null);
+  const [error, setError] = useState(null);
+
+  const handleComplete = async (answers) => {
+    setError(null);
+    try {
+      const res = await fetch('/api/quiz/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ answers }),
+      });
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({}));
+        throw new Error(detail.detail || `Server error ${res.status}`);
+      }
+      const data = await res.json();
+      setResult(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
 
   if (result) {
-    const total = Object.values(result).reduce((sum, v) => sum + v, 0);
-    const max = Object.keys(result).length * 4;
-    return (
-      <div style={styles.container}>
-        <div style={styles.resultCard}>
-          <div style={styles.heading}>Quiz Complete</div>
-          <div style={styles.score}>{total} / {max}</div>
-          <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>
-            Higher scores may indicate more frequent ADHD-related symptoms.
-            This is a screening tool, not a diagnosis.
-          </p>
-          <button style={styles.retakeBtn} onClick={() => setResult(null)}>
-            Retake Quiz
-          </button>
-        </div>
-      </div>
-    );
+    return <ResultsPage result={result} onRetake={() => setResult(null)} />;
   }
 
   return (
     <div style={styles.container}>
-      <QuizFlow onComplete={setResult} />
+      {error && (
+        <div style={{ color: '#dc2626', marginBottom: '1rem', maxWidth: '560px', width: '100%' }}>
+          Submission failed: {error}
+        </div>
+      )}
+      <QuizFlow onComplete={handleComplete} />
     </div>
   );
 }
