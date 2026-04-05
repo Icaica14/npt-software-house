@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import './App.css';
+import ConsentScreen from './components/ConsentScreen';
 import QuizFlow from './components/QuizFlow';
 import ResultsPage from './components/ResultsPage';
 
@@ -27,6 +28,7 @@ const styles = {
 };
 
 export default function App() {
+  const [consented, setConsented] = useState(false);
   const [result, setResult] = useState(null);
   const [error, setError] = useState(null);
 
@@ -50,12 +52,13 @@ export default function App() {
   };
 
   if (result) {
-    return <ResultsPage result={result} onRetake={() => setResult(null)} />;
+    return <ResultsPage result={result} onRetake={() => { setResult(null); setConsented(false); }} />;
   }
 
   return (
     <>
       <a href="#main-content" className="skip-link">Skip to main content</a>
+      {!consented && <ConsentScreen onAccept={() => setConsented(true)} />}
       <div style={styles.container}>
         {error && (
           <div

@@ -349,10 +349,26 @@ export default function ResultsPage({ result, onRetake }) {
 
             {/* ── Disclaimer ── */}
             <div style={styles.disclaimer} role="note" aria-label="Medical disclaimer">
-              <span style={styles.disclaimerBold}>Not a medical diagnosis.</span>{' '}
-              This screening tool is for informational purposes only. ADHD diagnosis requires a
-              comprehensive evaluation by a qualified healthcare professional, including clinical
-              interview, behaviour rating scales, and review of medical and developmental history.
+              <div style={styles.disclaimerHeader}>
+                <span style={styles.disclaimerIcon} aria-hidden="true">⚠️</span>
+                <span style={styles.disclaimerBold}>Professional Evaluation Strongly Recommended</span>
+              </div>
+              <p style={styles.disclaimerBody}>
+                These results are for <strong>informational and educational purposes only</strong> — they do not
+                constitute a medical diagnosis. ADHD diagnosis requires a comprehensive evaluation by a
+                licensed healthcare professional, including a structured clinical interview, behaviour
+                rating scales, and a review of medical and developmental history.
+              </p>
+              <p style={styles.disclaimerBody}>
+                <strong>Self-report bias note:</strong> This tool relies solely on your own responses.
+                Anxiety, depression, sleep disorders, and other conditions can produce overlapping
+                symptoms. A clinician can help distinguish between them.
+              </p>
+              <p style={{ ...styles.disclaimerBody, marginBottom: 0 }}>
+                <strong>Accessibility note:</strong> This screener works best as a starting point for
+                self-reflection and conversation with a healthcare provider. It is not a substitute for
+                a professional assessment.
+              </p>
             </div>
 
             {/* ── Actions ── */}
@@ -542,18 +558,35 @@ const styles = {
     fontSize: '0.88rem',
   },
   disclaimer: {
-    background: '#f9fafb',
-    border: '1px solid #e5e7eb',
+    background: '#fff7ed',
+    border: '1px solid #fed7aa',
     borderRadius: '10px',
-    padding: '0.9rem 1rem',
+    padding: '1rem 1.1rem',
     fontSize: '0.82rem',
     color: '#6b7280',
     lineHeight: 1.6,
     marginBottom: '1.25rem',
   },
+  disclaimerHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.4rem',
+    marginBottom: '0.6rem',
+  },
+  disclaimerIcon: {
+    fontSize: '1rem',
+  },
   disclaimerBold: {
     fontWeight: 700,
-    color: '#374151',
+    color: '#9a3412',
+    fontSize: '0.88rem',
+  },
+  disclaimerBody: {
+    fontSize: '0.82rem',
+    color: '#6b7280',
+    lineHeight: 1.6,
+    marginTop: 0,
+    marginBottom: '0.55rem',
   },
   resourceItem: {
     display: 'flex',
