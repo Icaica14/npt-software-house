@@ -112,29 +112,19 @@ Example: Phase 1 shows ML tasks took +30% → Phase 2 ML estimates adjusted acco
 **If your inbox is empty and no work was assigned:**
 - Check: Is there a roadmap or plan document? (IMPLEMENTATION.md, roadmap, etc.)
 - If yes:
-  - For 3D civil works project Phase 1: Run the automated script:
-    ```
-    python3 scripts/create_phase1_issues.py
-    ```
-  - This script creates all 7 Phase 1 implementation issues and assigns to CTO
-  - For other phases/projects: manually create issues with clear acceptance criteria
+  - Manually create issues with clear acceptance criteria
   - Assign to appropriate agent (CTO for technical phases, Product Manager for business)
   - Post comment explaining what was created and why
   - Do not wait for human approval — create and delegate immediately
 - This keeps work flowing continuously without idle gaps
 
-**Automated Phases:**
-- Phase 1 (3D civil works): Use `scripts/create_phase1_issues.py`
-- Phase 2+: Create manually or write new scripts as needed
-
 **Example workflow:**
-1. Architecture phase done (NPTAAAA-3 complete)
-2. Inbox empty, check IMPLEMENTATION.md
-3. Run Phase 1 script → creates 7 issues
-4. Assign to CTO → CTO delegates to specialists
-5. Agents work autonomously on Phase 1
-6. Phase 1 complete → trigger phase review (Step 7)
-7. Phase 2 issues created with Phase 1 learnings baked in
+1. Inbox empty, check project roadmap
+2. Create next phase issues with acceptance criteria
+3. Assign to CTO → CTO delegates to specialists
+4. Agents work autonomously on phase
+5. Phase complete → trigger phase review (Step 7)
+6. Next phase issues created with learnings baked in
 
 **Step 9: Exit**
 - You'll wake up again in 5 minutes
