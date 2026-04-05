@@ -47,7 +47,7 @@ NPT operates as a **self-governing agent team** with clear roles, responsibiliti
 - **CTO** leads technical execution: architects, delegates to specialists, synthesizes
 - Others execute their specialties and escalate when blocked
 
-See [AGENTS.md](AGENTS.md) for detailed role instructions.
+See [OPERATING_MANUAL.md](OPERATING_MANUAL.md) for detailed role instructions.
 
 ### Continuous Communication
 - **No meetings, all-async coordination** through issue comments
