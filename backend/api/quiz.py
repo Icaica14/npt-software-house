@@ -2,15 +2,25 @@
 
 20 questions adapted from the Adult ADHD Self-Report Scale (ASRS-v1.1)
 and DSM-5 criteria.  Each question has an id, text, and category
-(inattention | hyperactivity).
+(inattention | hyperactivity | distractor).
+
+Distractor questions (IDs 21-25) are included in the shuffled quiz to
+detect pattern-gaming; their answers do not contribute to scoring.
 """
 
-from typing import List, Literal
+import random
+from collections import Counter
+from typing import Dict, List, Literal, Optional
 
 from pydantic import BaseModel, field_validator
 
 
-Category = Literal["inattention", "hyperactivity"]
+Category = Literal["inattention", "hyperactivity", "distractor"]
+
+# IDs of real scoring questions
+SCORING_QUESTION_IDS = set(range(1, 21))
+# IDs of distractor questions
+DISTRACTOR_QUESTION_IDS = set(range(21, 26))
 
 
 class Question(BaseModel):
@@ -172,14 +182,52 @@ QUESTIONS: List[Question] = [
 ]
 
 
+DISTRACTOR_QUESTIONS: List[Question] = [
+    Question(
+        id=21,
+        category="distractor",
+        text="How often do you enjoy spending time with close friends or family?",
+    ),
+    Question(
+        id=22,
+        category="distractor",
+        text="How often do you find it easy to relax on a quiet evening at home?",
+    ),
+    Question(
+        id=23,
+        category="distractor",
+        text="How often do you feel satisfied after completing a routine daily task?",
+    ),
+    Question(
+        id=24,
+        category="distractor",
+        text="How often do you feel calm and at ease in familiar environments?",
+    ),
+    Question(
+        id=25,
+        category="distractor",
+        text="How often do you remember where you placed everyday objects like your keys?",
+    ),
+]
+
+ALL_QUESTIONS: List[Question] = QUESTIONS + DISTRACTOR_QUESTIONS
+
+
 def get_questions() -> List[Question]:
-    """Return the full list of screening questions."""
+    """Return the full list of scoring questions (no distractors)."""
     return QUESTIONS
+
+
+def get_shuffled_questions() -> List[Question]:
+    """Return all questions (scoring + distractors) in random order."""
+    shuffled = list(ALL_QUESTIONS)
+    random.shuffle(shuffled)
+    return shuffled
 
 
 def get_question_by_id(question_id: int) -> Question | None:
     """Return a single question by its id, or None if not found."""
-    for q in QUESTIONS:
+    for q in ALL_QUESTIONS:
         if q.id == question_id:
             return q
     return None
@@ -193,6 +241,8 @@ class ScoreResult(BaseModel):
     hyperactivity_score: int
     total_score: int
     risk_level: RiskLevel
+    cronbach_alpha: float
+    consistency_warning: bool
 
     @field_validator("inattention_score", "hyperactivity_score")
     @classmethod
@@ -209,6 +259,73 @@ class ScoreResult(BaseModel):
         return v
 
 
+def _compute_cronbach_alpha(answers: List[int]) -> float:
+    """Compute split-half reliability (Spearman-Brown) as a proxy for Cronbach's alpha.
+
+    Splits the 20 scoring items into two halves by index (odd vs even positions),
+    sums each half, then applies the Spearman-Brown prophecy formula.
+    Returns a value in [0, 1]; closer to 1 means more internally consistent.
+    When all answers are identical the formula yields 0 (undefined correlation).
+    """
+    n = len(answers)
+    odd = answers[0::2]   # items at even indices (positions 0,2,4,...)
+    even = answers[1::2]  # items at odd indices
+
+    sum_odd = sum(odd)
+    sum_even = sum(even)
+
+    # Pearson correlation between the two halves (treated as two observations)
+    # We iterate over paired sums as a scalar correlation with a single pair —
+    # instead, correlate item-by-item across the split.
+    half = n // 2
+    mean_o = sum_odd / half
+    mean_e = sum_even / half
+
+    cov = sum((o - mean_o) * (e - mean_e) for o, e in zip(odd, even)) / half
+    var_o = sum((o - mean_o) ** 2 for o in odd) / half
+    var_e = sum((e - mean_e) ** 2 for e in even) / half
+
+    denom = (var_o * var_e) ** 0.5
+    if denom == 0:
+        return 0.0
+
+    r = cov / denom
+    r = max(-1.0, min(1.0, r))  # clamp numerical noise
+
+    # Spearman-Brown correction for full-length test
+    if r == -1.0:
+        return 0.0
+    alpha = (2 * r) / (1 + r)
+    return round(max(0.0, alpha), 3)
+
+
+def _check_consistency(scoring_answers: List[int]) -> tuple[float, bool]:
+    """Return (cronbach_alpha, consistency_warning) for the 20 scoring answers."""
+    alpha = _compute_cronbach_alpha(scoring_answers)
+
+    unique = set(scoring_answers)
+    # All identical answers → obvious gaming
+    if len(unique) == 1:
+        return alpha, True
+
+    # 85%+ same answer → highly suspicious
+    most_common_count = Counter(scoring_answers).most_common(1)[0][1]
+    if most_common_count >= len(scoring_answers) * 0.85:
+        return alpha, True
+
+    # Very low variance (near-uniform responses)
+    mean = sum(scoring_answers) / len(scoring_answers)
+    variance = sum((a - mean) ** 2 for a in scoring_answers) / len(scoring_answers)
+    if variance < 0.25:
+        return alpha, True
+
+    # Low split-half reliability indicates erratic / random responding
+    if alpha < 0.3:
+        return alpha, True
+
+    return alpha, False
+
+
 def calculate_score(answers: List[int]) -> ScoreResult:
     """Calculate ADHD risk score from 20 answers on a 1-4 scale.
 
@@ -217,7 +334,8 @@ def calculate_score(answers: List[int]) -> ScoreResult:
                  Index 0 corresponds to question id 1.
 
     Returns:
-        ScoreResult with subscale scores, total, and risk level.
+        ScoreResult with subscale scores, total, risk level,
+        cronbach_alpha, and consistency_warning.
 
     Raises:
         ValueError: if answers length != 20 or any answer not in [1, 4].
@@ -239,9 +357,30 @@ def calculate_score(answers: List[int]) -> ScoreResult:
     else:
         risk_level = "high"
 
+    cronbach_alpha, consistency_warning = _check_consistency(answers)
+
     return ScoreResult(
         inattention_score=inattention_score,
         hyperactivity_score=hyperactivity_score,
         total_score=total_score,
         risk_level=risk_level,
+        cronbach_alpha=cronbach_alpha,
+        consistency_warning=consistency_warning,
     )
+
+
+def calculate_score_from_dict(answers_by_id: Dict[int, int]) -> ScoreResult:
+    """Calculate score from a mapping of question_id → answer.
+
+    Distractor question answers are ignored for scoring but the 20 real
+    question answers must all be present.
+
+    Raises:
+        ValueError: if any scoring question is missing or answer out of range.
+    """
+    missing = SCORING_QUESTION_IDS - set(answers_by_id.keys())
+    if missing:
+        raise ValueError(f"Missing answers for question ids: {sorted(missing)}")
+
+    ordered = [answers_by_id[i] for i in range(1, 21)]
+    return calculate_score(ordered)

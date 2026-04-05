@@ -3,13 +3,25 @@
 import pytest
 from fastapi.testclient import TestClient
 
-from backend.api.quiz import QUESTIONS, get_question_by_id, get_questions
+from backend.api.quiz import (
+    QUESTIONS,
+    DISTRACTOR_QUESTIONS,
+    SCORING_QUESTION_IDS,
+    DISTRACTOR_QUESTION_IDS,
+    get_question_by_id,
+    get_questions,
+    get_shuffled_questions,
+    calculate_score,
+    calculate_score_from_dict,
+    _check_consistency,
+)
 from backend.api.server import app
 
 client = TestClient(app)
 
 EXPECTED_QUESTION_COUNT = 20
-VALID_CATEGORIES = {"inattention", "hyperactivity"}
+EXPECTED_DISTRACTOR_COUNT = 5
+VALID_CATEGORIES = {"inattention", "hyperactivity", "distractor"}
 
 
 # --- Unit tests for quiz.py ---
@@ -39,14 +51,14 @@ def test_all_questions_have_text():
 
 def test_all_questions_have_valid_category():
     for q in get_questions():
-        assert q.category in VALID_CATEGORIES, (
+        assert q.category in {"inattention", "hyperactivity"}, (
             f"Question {q.id} has invalid category: {q.category!r}"
         )
 
 
 def test_both_categories_present():
     categories = {q.category for q in get_questions()}
-    assert categories == VALID_CATEGORIES
+    assert categories == {"inattention", "hyperactivity"}
 
 
 def test_get_question_by_id_valid():
@@ -67,10 +79,21 @@ def test_list_questions_status_200():
     assert response.status_code == 200
 
 
-def test_list_questions_returns_20():
+def test_list_questions_returns_25():
+    """Endpoint returns 20 scoring + 5 distractor questions."""
     response = client.get("/api/quiz/questions")
     data = response.json()
-    assert len(data) == EXPECTED_QUESTION_COUNT
+    assert len(data) == EXPECTED_QUESTION_COUNT + EXPECTED_DISTRACTOR_COUNT
+
+
+def test_list_questions_shuffled():
+    """Two calls should (eventually) return different orders."""
+    orders = set()
+    for _ in range(10):
+        resp = client.get("/api/quiz/questions")
+        ids = tuple(q["id"] for q in resp.json())
+        orders.add(ids)
+    assert len(orders) > 1, "Questions appear to always return in the same order"
 
 
 def test_list_questions_structure():
@@ -84,6 +107,21 @@ def test_list_questions_structure():
         assert isinstance(q["id"], int)
         assert isinstance(q["text"], str)
         assert q["text"].strip()
+
+
+def test_list_questions_contains_distractors():
+    response = client.get("/api/quiz/questions")
+    categories = {q["category"] for q in response.json()}
+    assert "distractor" in categories
+
+
+def test_shuffle_does_not_change_score():
+    """Submitting the same answers regardless of presentation order yields identical score."""
+    answers = {i: (i % 4) + 1 for i in range(1, 21)}
+    r1 = client.post("/api/quiz/submit", json={"answers": answers}).json()
+    r2 = client.post("/api/quiz/submit", json={"answers": answers}).json()
+    assert r1["total_score"] == r2["total_score"]
+    assert r1["risk_level"] == r2["risk_level"]
 
 
 def test_get_single_question():
@@ -117,6 +155,10 @@ def test_submit_valid_answers():
     assert data["inattention_score"] == 10
     assert data["hyperactivity_score"] == 10
     assert data["risk_level"] == "low"
+    assert "cronbach_alpha" in data
+    assert "consistency_warning" in data
+    assert isinstance(data["cronbach_alpha"], float)
+    assert isinstance(data["consistency_warning"], bool)
 
 
 def test_submit_high_risk():
@@ -151,3 +193,67 @@ def test_submit_invalid_answer_value_returns_422():
 def test_submit_empty_body_returns_422():
     response = client.post("/api/quiz/submit", json={})
     assert response.status_code == 422
+
+
+def test_submit_with_distractor_answers_ignored():
+    """Including distractor answers does not affect score."""
+    answers_without = {str(i): 2 for i in range(1, 21)}
+    answers_with = dict(answers_without)
+    answers_with.update({str(i): 4 for i in range(21, 26)})  # distractors
+
+    r1 = client.post("/api/quiz/submit", json={"answers": answers_without}).json()
+    r2 = client.post("/api/quiz/submit", json={"answers": answers_with}).json()
+
+    assert r1["total_score"] == r2["total_score"]
+    assert r1["risk_level"] == r2["risk_level"]
+
+
+# --- Consistency / anti-gaming tests ---
+
+
+def test_all_same_answers_flags_consistency_warning():
+    """All-identical answers (e.g. all 1s or all 4s) must trigger consistency_warning."""
+    for value in (1, 4):
+        answers = [value] * 20
+        _, warning = _check_consistency(answers)
+        assert warning, f"Expected consistency_warning=True for all-{value}s"
+
+
+def test_varied_answers_no_consistency_warning():
+    """A plausible mixed response should not trigger a warning."""
+    answers = [1, 2, 3, 4, 2, 3, 1, 4, 2, 3, 1, 2, 3, 4, 2, 3, 1, 4, 2, 3]
+    _, warning = _check_consistency(answers)
+    assert not warning
+
+
+def test_cronbach_alpha_range():
+    """cronbach_alpha must be in [0, 1]."""
+    for test_answers in (
+        [1] * 20,
+        [4] * 20,
+        [1, 2, 3, 4] * 5,
+        [(i % 4) + 1 for i in range(20)],
+    ):
+        alpha, _ = _check_consistency(test_answers)
+        assert 0.0 <= alpha <= 1.0, f"alpha={alpha} out of range for {test_answers[:5]}..."
+
+
+def test_submit_all_same_returns_consistency_warning():
+    """API submit with all-identical answers should return consistency_warning=True."""
+    answers = {str(i): 1 for i in range(1, 21)}
+    data = client.post("/api/quiz/submit", json={"answers": answers}).json()
+    assert data["consistency_warning"] is True
+
+
+def test_distractors_ignored_for_score():
+    """calculate_score_from_dict ignores distractor question ids."""
+    base = {i: 2 for i in range(1, 21)}
+    with_distractors = dict(base)
+    with_distractors.update({i: 4 for i in range(21, 26)})
+
+    r1 = calculate_score_from_dict(base)
+    r2 = calculate_score_from_dict(with_distractors)
+
+    assert r1.total_score == r2.total_score
+    assert r1.inattention_score == r2.inattention_score
+    assert r1.hyperactivity_score == r2.hyperactivity_score

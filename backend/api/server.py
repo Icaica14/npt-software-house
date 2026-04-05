@@ -6,7 +6,13 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-from backend.api.quiz import Question, ScoreResult, calculate_score, get_question_by_id, get_questions
+from backend.api.quiz import (
+    Question,
+    ScoreResult,
+    calculate_score_from_dict,
+    get_question_by_id,
+    get_shuffled_questions,
+)
 
 app = FastAPI(
     title="DHDA Quiz API",
@@ -24,8 +30,8 @@ app.add_middleware(
 
 @app.get("/api/quiz/questions", response_model=List[Question])
 def list_questions() -> List[Question]:
-    """Return all 20 screening questions with id, text, and category."""
-    return get_questions()
+    """Return all questions (20 scoring + 5 distractors) in shuffled order."""
+    return get_shuffled_questions()
 
 
 @app.get("/api/quiz/questions/{question_id}", response_model=Question)
@@ -43,24 +49,15 @@ class SubmitRequest(BaseModel):
 
 @app.post("/api/quiz/submit", response_model=ScoreResult)
 def submit_quiz(body: SubmitRequest) -> ScoreResult:
-    """Accept answers for all 20 questions and return a scored result.
+    """Accept answers for quiz questions and return a scored result.
 
-    Body: ``{"answers": {"1": 3, "2": 2, ...}}`` — keys are question ids (1-20),
-    values are 1-4.
+    Body: ``{"answers": {"1": 3, "2": 2, ...}}`` — keys are question ids (1-25),
+    values are 1-4.  Answers for distractor questions (ids 21-25) are accepted
+    but ignored for scoring.  All 20 scoring questions (ids 1-20) must be present.
+    The response includes ``cronbach_alpha`` and ``consistency_warning`` fields.
     """
-    if len(body.answers) != 20:
-        raise HTTPException(
-            status_code=422,
-            detail=f"Expected 20 answers, got {len(body.answers)}",
-        )
     try:
-        ordered = [body.answers[i] for i in range(1, 21)]
-    except KeyError as exc:
-        raise HTTPException(
-            status_code=422, detail=f"Missing answer for question {exc}"
-        ) from exc
-    try:
-        return calculate_score(ordered)
+        return calculate_score_from_dict(body.answers)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
