@@ -11,6 +11,7 @@ agents:
     runtime:
       heartbeat:
         enabled: true
+        interval: 300
         maxConcurrentRuns: 5
     permissions:
       canCreateAgents: true
@@ -28,6 +29,7 @@ agents:
     runtime:
       heartbeat:
         enabled: true
+        interval: 300
   delivery-release-manager:
     role: general
     icon: package
@@ -59,6 +61,7 @@ agents:
     runtime:
       heartbeat:
         enabled: true
+        interval: 300
   product-manager:
     role: general
     icon: package
@@ -73,6 +76,7 @@ agents:
     runtime:
       heartbeat:
         enabled: true
+        interval: 300
   qa-critic:
     role: general
     icon: shield
@@ -87,6 +91,7 @@ agents:
     runtime:
       heartbeat:
         enabled: true
+        interval: 300
   software-engineer:
     role: general
     icon: code
@@ -113,6 +118,7 @@ agents:
     runtime:
       heartbeat:
         enabled: true
+        interval: 300
 projects:
   3d-civil-works:
     color: '#14b8a6'
