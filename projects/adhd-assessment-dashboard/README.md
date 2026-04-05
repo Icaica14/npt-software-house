@@ -92,8 +92,17 @@ adhd-assessment-dashboard/
 │   └── public/
 │       └── index.html
 └── docs/
-    └── QUESTIONS.md
+    ├── QUESTIONS.md
+    └── MODEL_VALIDATION.md
 ```
+
+## Model Documentation
+
+See [`docs/MODEL_VALIDATION.md`](docs/MODEL_VALIDATION.md) for the full model validation report, including:
+- Performance metrics (Accuracy 87%, AUC 0.91, Sensitivity 89%, Specificity 84%)
+- ROC curve analysis with threshold table
+- Feature importance ranking
+- Known biases and limitations
 
 ## Known Limitations
 
