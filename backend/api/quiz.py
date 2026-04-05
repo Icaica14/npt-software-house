@@ -234,6 +234,42 @@ def get_question_by_id(question_id: int) -> Question | None:
     return None
 
 
+# ---------------------------------------------------------------------------
+# Public anti-gaming API (required by DHD-13)
+# ---------------------------------------------------------------------------
+
+def shuffle_questions(questions: list) -> list:
+    """Return a shuffled copy of the given questions list; original is unchanged."""
+    shuffled = list(questions)
+    random.shuffle(shuffled)
+    return shuffled
+
+
+def add_distractor_questions(questions: list) -> list:
+    """Return a new list with distractor questions interspersed among the scoring questions."""
+    distractors = [q.__dict__ if hasattr(q, "__dict__") else dict(q) for q in DISTRACTOR_QUESTIONS]
+    result = list(questions) + [
+        {"id": d["id"], "text": d["text"], "category": "distractor", "distractor": True}
+        for d in distractors
+    ]
+    random.shuffle(result)
+    return result
+
+
+def cronbach_alpha(answers: list) -> float:
+    """Public wrapper: compute Cronbach's alpha for a list of integer answers."""
+    return _compute_cronbach_alpha([int(a) for a in answers])
+
+
+def validate_response_consistency(answers: list) -> dict:
+    """Validate response consistency; return dict with is_consistent and optional warning."""
+    int_answers = [int(a) for a in answers]
+    _, flagged = _check_consistency(int_answers)
+    if flagged:
+        return {"is_consistent": False, "warning": "All answers are 1 or 4" if set(int_answers) <= {1, 4} else "Suspicious response pattern detected"}
+    return {"is_consistent": True, "warning": None}
+
+
 RiskLevel = Literal["low", "moderate", "high"]
 
 # ASRS-v1.1 population reference norms (adult general population, N=519, Kessler et al. 2005).

@@ -29,10 +29,11 @@ app.add_middleware(
 )
 
 
-@app.get("/api/quiz/questions", response_model=List[Question])
-def list_questions() -> List[Question]:
+@app.get("/api/quiz/questions")
+def list_questions() -> dict:
     """Return all questions (20 scoring + 5 distractors) in shuffled order."""
-    return get_shuffled_questions()
+    questions = get_shuffled_questions()
+    return {"questions": [q.model_dump() for q in questions], "shuffled": True}
 
 
 @app.get("/api/quiz/questions/{question_id}", response_model=Question)

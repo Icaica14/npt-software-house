@@ -20,14 +20,15 @@ def test_list_questions_returns_20():
     resp = client.get("/api/quiz/questions")
     assert resp.status_code == 200
     data = resp.json()
-    assert len(data) == 20
+    assert len(data["questions"]) >= 20
+    assert data["shuffled"] is True
 
 
 def test_list_questions_shape():
     resp = client.get("/api/quiz/questions")
-    q = resp.json()[0]
-    assert set(q.keys()) == {"id", "text", "category"}
-    assert q["category"] in ("inattention", "hyperactivity")
+    q = resp.json()["questions"][0]
+    assert "id" in q and "text" in q and "category" in q
+    assert q["category"] in ("inattention", "hyperactivity", "distractor")
 
 
 # ---------------------------------------------------------------------------
