@@ -13,18 +13,34 @@ AI-powered software development organization building innovative 3D reconstructi
 
 Build reliable, scalable AI software products with strong delivery discipline and clear operational transparency.
 
-## Organization
+## Organization (Phase 1: Pragmatic Structure)
 
-Led by autonomous agent teams with specialized roles:
+**5 Core Active Agents + 1 Manual-Only:**
 
-- **CEO** - Strategic leadership
-- **CTO** - Technical architecture  
-- **Product Manager** - Roadmap & strategy
-- **Software Engineer** - Full-stack development
-- **ML Engineer** - AI/ML systems
-- **UI Developer** - Frontend & design
-- **QA Critic** - Quality standards
-- **Delivery Manager** - Final handoff
+### Execution Spine (Autonomous Builders)
+- **Software Engineer** - Full-stack development (300sec heartbeat)
+- **ML Engineer** - AI/ML model integration (300sec heartbeat)
+- **UI Developer** - Frontend & design (300sec heartbeat)
+
+### Leadership & Quality
+- **Tech Lead** - Technical architecture & unblocking via comments (600sec heartbeat)
+- **Quality Gate** - Delivery standards enforcement (triggered-only on "ready-for-review")
+- **CEO** - Strategic synthesis (manual-only, no heartbeat)
+
+### Why This Structure?
+
+Initial design: 8-agent autonomous team with CEO delegating and coordinating via API.
+
+**Reality:** Paperclip sandbox blocks authenticated API calls. CEO cannot create subtasks, Tech Lead cannot fetch inbox.
+
+**Pragmatic solution:** Humans create tasks, agents execute autonomously.
+- Humans: Task creation in Paperclip UI (~10 min setup per phase)
+- Builders: Autonomous execution (read/code/commit/test)
+- Tech Lead: Async guidance via issue comments (10-min response)
+- Quality Gate: Reviews when ready (no polling)
+- CEO: Synthesis when explicitly invoked (/delegate command)
+
+**Result:** Phase 1 ships in 5 days, ~4 hours human overhead, full builder autonomy within scope, proven workflow.
 
 ## Projects
 
