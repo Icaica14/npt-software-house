@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './QuizFlow.css';
 
 function QuizFlow({ onComplete }) {
@@ -10,11 +10,7 @@ function QuizFlow({ onComplete }) {
 
   const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
-  useEffect(() => {
-    fetchQuestions();
-  }, []);
-
-  const fetchQuestions = async () => {
+  const fetchQuestions = useCallback(async () => {
     try {
       const response = await fetch(`${API_BASE}/api/quiz/questions`);
       const data = await response.json();
@@ -25,7 +21,11 @@ function QuizFlow({ onComplete }) {
       setError('Failed to load quiz questions. Please check your connection.');
       setLoading(false);
     }
-  };
+  }, [API_BASE]);
+
+  useEffect(() => {
+    fetchQuestions();
+  }, [fetchQuestions]);
 
   if (loading) {
     return <div className="quiz-loading">Loading quiz...</div>;

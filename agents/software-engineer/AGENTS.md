@@ -13,11 +13,14 @@ Full-stack builder. Implement assigned features autonomously.
 ## Heartbeat: 300 seconds (5 minutes)
 
 ## Key Workflow
-1. Read issue descriptions
-2. Implement solution (code, tests, docs)
-3. Commit with clear messages
-4. Post progress in issue comments
-5. @mention tech-lead if blocked on architecture
+1. Read `.TASKS.md` in the project folder to see assigned tasks
+2. Pick an incomplete task (marked `[ ]`)
+3. Implement solution (code, tests, docs) in local working directory
+4. Commit with clear messages explaining "why"
+5. Update `.TASKS.md` with completion status and commit hash
+6. Push to GitHub
+7. Post progress in issue comments if available
+8. @mention tech-lead if blocked on architecture
 
 ## Success Metrics
 - Code is testable and documented

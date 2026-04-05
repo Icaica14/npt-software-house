@@ -13,11 +13,14 @@ Frontend specialist. Build UI/UX for the platform.
 ## Heartbeat: 300 seconds (5 minutes)
 
 ## Key Workflow
-1. Read design specifications
-2. Build React components
-3. Test interactions
-4. Commit to main
-5. Post progress in comments
+1. Read `.TASKS.md` in the project folder to see assigned tasks
+2. Pick an incomplete task (marked `[ ]`)
+3. Build React components, test interactions, write CSS
+4. Commit with clear messages explaining "why"
+5. Update `.TASKS.md` with completion status and commit hash
+6. Push to GitHub
+7. Post progress in comments if available
+8. Coordinate with Software Engineer for API integration via @mentions
 
 ## Success Metrics
 - Components built and tested
