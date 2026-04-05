@@ -413,3 +413,44 @@ def test_api_model_info_endpoint():
     assert perf["auc"] == 0.90
     assert perf["sensitivity"] == 0.80
     assert perf["specificity"] == 0.85
+
+
+# ---------------------------------------------------------------------------
+# DHD-22: ML Model Visualization & Interpretation (exact task spec tests)
+# ---------------------------------------------------------------------------
+
+
+def test_get_model_info():
+    """get_model_info() returns valid model metadata dict."""
+    info = get_model_info()
+    assert isinstance(info, dict)
+    assert "model_architecture" in info
+    assert isinstance(info["model_architecture"]["type"], str)
+    assert len(info["model_architecture"]["type"]) > 0
+
+
+def test_model_info_has_all_fields():
+    """get_model_info() includes architecture, training_data, performance, limitations."""
+    info = get_model_info()
+    assert "model_architecture" in info
+    assert "training_data_summary" in info
+    assert "performance_metrics" in info
+    assert "known_limitations" in info
+
+
+def test_get_feature_importance():
+    """get_feature_importance() returns top 10 questions with scores summing to ~1.0."""
+    fi = get_feature_importance()
+    assert len(fi) == 10
+    total = sum(fi.values())
+    assert abs(total - 1.0) < 0.05
+
+
+def test_endpoint_model_info():
+    """GET /api/quiz/model-info returns 200 and valid JSON."""
+    response = api_client.get("/api/quiz/model-info")
+    assert response.status_code == 200
+    data = response.json()
+    assert isinstance(data, dict)
+    assert "model_architecture" in data
+    assert "feature_importance" in data
