@@ -12,6 +12,7 @@ export function generatePDFReport(result) {
     hyperactivity_score,
     risk_level,
     confidence,
+    featureImportance = [],
   } = result;
 
   const riskLabels = { low: 'Low Risk', moderate: 'Moderate Risk', high: 'High Risk' };
@@ -29,6 +30,13 @@ export function generatePDFReport(result) {
   const today = new Date().toLocaleDateString('en-US', {
     year: 'numeric', month: 'long', day: 'numeric',
   });
+
+  const top5Features = [...featureImportance]
+    .sort((a, b) => b.importance - a.importance)
+    .slice(0, 5);
+
+  const featureImpactColor = (imp) => imp >= 0.13 ? '#dc2626' : imp >= 0.09 ? '#d97706' : '#059669';
+  const featureImpactLabel = (imp) => imp >= 0.13 ? 'High' : imp >= 0.09 ? 'Moderate' : 'Low';
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -209,6 +217,29 @@ export function generatePDFReport(result) {
       </div>
     </div>
   </div>
+
+  ${top5Features.length > 0 ? `
+  <div class="section">
+    <h2>What Drove Your Score</h2>
+    ${top5Features.map((f, i) => {
+      const pct = Math.round((f.importance / (top5Features[0]?.importance || 1)) * 100);
+      const color = featureImpactColor(f.importance);
+      const label = featureImpactLabel(f.importance);
+      const shortText = f.question_text.length > 65 ? f.question_text.slice(0, 62) + '…' : f.question_text;
+      return `<div class="bar-container">
+        <div class="bar-label">
+          <span>${i + 1}. Q${f.question_id}: &ldquo;${shortText}&rdquo;</span>
+          <span style="color:${color}; font-weight:bold;">${label} (${f.importance.toFixed(2)})</span>
+        </div>
+        <div class="bar-track">
+          <div class="bar-fill" style="width:${pct}%; background:${color};"></div>
+        </div>
+      </div>`;
+    }).join('')}
+    <p style="font-size:9pt; color:#9ca3af; margin-top:8px; line-height:1.5;">
+      Impact scores reflect the model's feature weights. Higher values indicate greater influence on your result.
+    </p>
+  </div>` : ''}
 
   <div class="section">
     <h2>How This Scoring Works</h2>

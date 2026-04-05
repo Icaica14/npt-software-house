@@ -10,7 +10,7 @@
  *     Called when the user clicks "Retake Quiz".
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generatePDFReport, computeConfidence } from '../utils/reportGenerator';
 import './ResultsPage.css';
 
@@ -135,6 +135,63 @@ function ConfidenceBadge({ pct }) {
   );
 }
 
+/** Feature importance bar chart — top 5 predictors. */
+function FeatureImportanceChart({ features }) {
+  const top5 = [...features]
+    .sort((a, b) => b.importance - a.importance)
+    .slice(0, 5);
+  const maxImportance = top5[0]?.importance || 1;
+
+  const impactLabel = (imp) => {
+    if (imp >= 0.13) return { label: 'High', color: '#dc2626' };
+    if (imp >= 0.09) return { label: 'Moderate', color: '#d97706' };
+    return { label: 'Low', color: '#059669' };
+  };
+
+  return (
+    <div>
+      {top5.map((f, i) => {
+        const pct = Math.round((f.importance / maxImportance) * 100);
+        const { label, color } = impactLabel(f.importance);
+        return (
+          <div key={f.question_id} style={{ marginBottom: '1rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: '0.85rem', color: '#374151', fontWeight: 600 }}>
+                {i + 1}. Q{f.question_id}: &ldquo;{f.question_text.length > 55 ? f.question_text.slice(0, 52) + '…' : f.question_text}&rdquo;
+              </span>
+              <span style={{ fontSize: '0.8rem', color, fontWeight: 700, flexShrink: 0, marginLeft: '0.5rem' }}>
+                {label} ({f.importance.toFixed(2)})
+              </span>
+            </div>
+            <div
+              role="progressbar"
+              aria-valuenow={Math.round(f.importance * 100)}
+              aria-valuemin={0}
+              aria-valuemax={100}
+              aria-label={`Question ${f.question_id} impact: ${label}`}
+              style={{ background: '#f3f4f6', borderRadius: '6px', height: '10px', overflow: 'hidden' }}
+            >
+              <div
+                style={{
+                  width: `${pct}%`,
+                  height: '100%',
+                  background: color,
+                  borderRadius: '6px',
+                  transition: 'width 0.8s ease',
+                }}
+              />
+            </div>
+          </div>
+        );
+      })}
+      <p style={{ fontSize: '0.78rem', color: '#9ca3af', marginTop: '0.5rem', lineHeight: 1.5 }}>
+        Impact scores are derived from the model&apos;s feature weights. Higher values indicate
+        that question had more influence on your overall score.
+      </p>
+    </div>
+  );
+}
+
 /** Collapsible section. */
 function Section({ id, title, children, defaultOpen = true }) {
   const [open, setOpen] = useState(defaultOpen);
@@ -164,11 +221,21 @@ export default function ResultsPage({ result, onRetake }) {
   const meta = RISK_META[risk_level] || RISK_META.moderate;
   const confidence = computeConfidence(total_score, risk_level);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [featureImportance, setFeatureImportance] = useState([]);
+
+  useEffect(() => {
+    fetch('/api/quiz/model-info')
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.feature_importance) setFeatureImportance(data.feature_importance);
+      })
+      .catch(() => {/* non-critical — section stays hidden */});
+  }, []);
 
   function handleDownloadPDF() {
     setPdfLoading(true);
     try {
-      generatePDFReport({ ...result, confidence });
+      generatePDFReport({ ...result, confidence, featureImportance });
     } finally {
       setTimeout(() => setPdfLoading(false), 1000);
     }
@@ -275,6 +342,13 @@ export default function ResultsPage({ result, onRetake }) {
                 Scores clearly within one range yield higher confidence; borderline scores yield lower confidence.
               </p>
             </Section>
+
+            {/* ── Feature Importance ── */}
+            {featureImportance.length > 0 && (
+              <Section id="feature-heading" title="What Drove Your Score">
+                <FeatureImportanceChart features={featureImportance} />
+              </Section>
+            )}
 
             {/* ── How This Works ── */}
             <Section id="how-heading" title="How This Works" defaultOpen={false}>
