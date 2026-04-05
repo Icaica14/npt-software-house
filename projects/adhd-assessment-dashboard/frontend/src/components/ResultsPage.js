@@ -2,10 +2,10 @@ import React from 'react';
 import './ResultsPage.css';
 
 function ResultsPage({ assessment, onRetake }) {
-  const riskColors = {
-    low: '#10b981',
-    moderate: '#f59e0b',
-    high: '#ef4444'
+  const riskConfig = {
+    low: { color: '#11863F', label: 'Low Risk' },
+    moderate: { color: '#D4A574', label: 'Moderate Risk' },
+    high: { color: '#CB2431', label: 'High Risk' }
   };
 
   const interpretations = {
@@ -17,7 +17,7 @@ function ResultsPage({ assessment, onRetake }) {
     moderate: {
       title: 'Moderate Risk',
       message: 'Your screening results suggest moderate levels of ADHD-like traits. This warrants further evaluation by a healthcare professional.',
-      details: 'You may benefit from speaking with a doctor, psychiatrist, or psychologist who specializes in ADHD for a comprehensive assessment.'
+      details: 'You may benefit from speaking with a doctor, psychiatrist, or psychologist who specialises in ADHD for a comprehensive assessment.'
     },
     high: {
       title: 'High Risk',
@@ -26,96 +26,149 @@ function ResultsPage({ assessment, onRetake }) {
     }
   };
 
-  const interp = interpretations[assessment.risk_level];
+  const risk = riskConfig[assessment.risk_level] || riskConfig.low;
+  const interp = interpretations[assessment.risk_level] || interpretations.low;
+
+  const inattentionPct = Math.round((assessment.inattention_score / 40) * 100);
+  const hyperactivityPct = Math.round((assessment.hyperactivity_score / 40) * 100);
 
   return (
     <div className="results-page">
-      <div className="results-header">
-        <h2>Your Results</h2>
+      <header className="results-header" role="banner">
+        <h1>Your Results</h1>
         <p>Based on your responses to the ADHD screening questionnaire</p>
-      </div>
+      </header>
 
-      <div className="results-container">
+      <main className="results-container" role="main">
+
         {/* Risk Level Card */}
-        <div className="risk-card" style={{ borderColor: riskColors[assessment.risk_level] }}>
-          <div className="risk-badge" style={{ backgroundColor: riskColors[assessment.risk_level] }}>
-            {interp.title}
-          </div>
-          <div className="risk-score">
+        <section
+          className="risk-card"
+          role="region"
+          aria-labelledby="risk-heading"
+          style={{ borderLeftColor: risk.color }}
+        >
+          <span
+            className="risk-badge"
+            style={{ backgroundColor: risk.color }}
+            aria-label={`Risk level: ${risk.label}`}
+          >
+            {risk.label}
+          </span>
+          <div className="risk-score" aria-label={`Overall score: ${assessment.total_score} out of 80`}>
             <p className="score-label">Overall Score</p>
-            <p className="score-value">{assessment.total_score} / 80</p>
+            <p className="score-value" aria-hidden="true">{assessment.total_score} / 80</p>
           </div>
-        </div>
+        </section>
 
-        {/* Subscores */}
-        <div className="subscores">
-          <div className="subscore-item">
-            <h4>Inattention</h4>
-            <div className="subscore-bar">
-              <div
-                className="subscore-fill"
-                style={{
-                  width: `${(assessment.inattention_score / 40) * 100}%`,
-                  backgroundColor: '#3b82f6'
-                }}
-              ></div>
-            </div>
-            <p className="subscore-value">{assessment.inattention_score} / 40</p>
-          </div>
-
-          <div className="subscore-item">
-            <h4>Hyperactivity/Impulsivity</h4>
-            <div className="subscore-bar">
-              <div
-                className="subscore-fill"
-                style={{
-                  width: `${(assessment.hyperactivity_score / 40) * 100}%`,
-                  backgroundColor: '#8b5cf6'
-                }}
-              ></div>
-            </div>
-            <p className="subscore-value">{assessment.hyperactivity_score} / 40</p>
-          </div>
-        </div>
+        {/* Subscores Table */}
+        <section className="subscores-section" role="region" aria-labelledby="subscores-heading">
+          <h2 id="subscores-heading" className="section-heading">Score Breakdown</h2>
+          <table className="subscores-table" aria-label="Subscore breakdown by category">
+            <thead>
+              <tr>
+                <th scope="col">Category</th>
+                <th scope="col">Score</th>
+                <th scope="col">Out of</th>
+                <th scope="col">Progress</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Inattention</td>
+                <td>{assessment.inattention_score}</td>
+                <td>40</td>
+                <td>
+                  <div
+                    className="subscore-bar"
+                    role="progressbar"
+                    aria-valuenow={assessment.inattention_score}
+                    aria-valuemin={0}
+                    aria-valuemax={40}
+                    aria-label={`Inattention: ${assessment.inattention_score} out of 40`}
+                  >
+                    <div
+                      className="subscore-fill subscore-fill--inattention"
+                      style={{ width: `${inattentionPct}%` }}
+                    ></div>
+                  </div>
+                </td>
+              </tr>
+              <tr>
+                <td>Hyperactivity / Impulsivity</td>
+                <td>{assessment.hyperactivity_score}</td>
+                <td>40</td>
+                <td>
+                  <div
+                    className="subscore-bar"
+                    role="progressbar"
+                    aria-valuenow={assessment.hyperactivity_score}
+                    aria-valuemin={0}
+                    aria-valuemax={40}
+                    aria-label={`Hyperactivity / Impulsivity: ${assessment.hyperactivity_score} out of 40`}
+                  >
+                    <div
+                      className="subscore-fill subscore-fill--hyperactivity"
+                      style={{ width: `${hyperactivityPct}%` }}
+                    ></div>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
 
         {/* Interpretation */}
-        <div className="interpretation-card">
-          <h3>{interp.title}</h3>
+        <section className="interpretation-card" role="region" aria-labelledby="interp-heading">
+          <h2 id="interp-heading" className="section-heading">{interp.title}</h2>
           <p className="interpretation-message">{interp.message}</p>
           <p className="interpretation-details">{interp.details}</p>
-        </div>
+        </section>
 
         {/* Disclaimer */}
-        <div className="disclaimer-card">
-          <h4>⚠️ Important Disclaimer</h4>
+        <section className="disclaimer-card" role="note" aria-labelledby="disclaimer-heading">
+          <h2 id="disclaimer-heading" className="disclaimer-heading">
+            <span aria-hidden="true">⚠️</span> Important Disclaimer
+          </h2>
           <p>
-            <strong>This is a screening tool only and not a medical diagnosis.</strong> ADHD is a complex neurodevelopmental condition that requires professional evaluation by a qualified healthcare provider (psychiatrist, neurologist, or clinical psychologist).
+            <strong>This is a screening tool only and not a medical diagnosis.</strong> ADHD is a complex
+            neurodevelopmental condition that requires professional evaluation by a qualified healthcare
+            provider (psychiatrist, neurologist, or clinical psychologist).
           </p>
           <p>
-            Screening results do not confirm or rule out ADHD. Many conditions can mimic ADHD symptoms, and many ADHD individuals may not exhibit all traits. Only a comprehensive professional assessment can provide an accurate diagnosis.
+            Screening results do not confirm or rule out ADHD. Many conditions can mimic ADHD symptoms,
+            and many ADHD individuals may not exhibit all traits. Only a comprehensive professional
+            assessment can provide an accurate diagnosis.
           </p>
           <p>
-            If you have concerns about ADHD, please consult a healthcare provider for proper evaluation and treatment options.
+            If you have concerns about ADHD, please consult a healthcare provider for proper evaluation
+            and treatment options.
           </p>
-        </div>
+        </section>
 
         {/* Next Steps */}
-        <div className="next-steps-card">
-          <h4>Recommended Next Steps</h4>
+        <section className="next-steps-card" role="region" aria-labelledby="next-steps-heading">
+          <h2 id="next-steps-heading" className="section-heading">Recommended Next Steps</h2>
           <ul>
             <li>Schedule an appointment with a healthcare provider</li>
             <li>Prepare a list of symptoms and how they impact your daily life</li>
-            <li>Gather information about your medical history and family history</li>
+            <li>Gather information about your medical and family history</li>
             <li>Consider asking for a formal ADHD evaluation or psychoeducational assessment</li>
           </ul>
-        </div>
-      </div>
+        </section>
 
-      <div className="results-footer">
-        <button className="retake-button" onClick={onRetake}>
+      </main>
+
+      <footer className="results-footer" role="contentinfo">
+        <button
+          className="retake-button"
+          onClick={onRetake}
+          aria-label="Retake the ADHD assessment quiz from the beginning"
+          type="button"
+        >
           Retake Quiz
         </button>
-      </div>
+      </footer>
     </div>
   );
 }

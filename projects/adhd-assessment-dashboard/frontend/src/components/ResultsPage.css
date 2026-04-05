@@ -1,47 +1,75 @@
+/* ============================================================
+   ResultsPage — Enterprise Design, WCAG 2.1 AA
+   Color palette: colorblind-safe
+     Primary:  #0066CC
+     Success:  #11863F
+     Warning:  #D4A574
+     Error:    #CB2431
+   ============================================================ */
+
+/* ── Layout ─────────────────────────────────────────────── */
 .results-page {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  background: #f8fafc;
-  padding: 20px;
+  background: #f0f4f8;
+  padding: 24px 16px;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI',
+    'Roboto', 'Helvetica Neue', Arial, sans-serif;
 }
 
+/* ── Header ─────────────────────────────────────────────── */
 .results-header {
   text-align: center;
-  margin-bottom: 40px;
+  margin-bottom: 32px;
 }
 
-.results-header h2 {
-  color: #1e293b;
-  margin-bottom: 10px;
+.results-header h1 {
+  color: #0d1f3c;
+  font-size: 26px;
+  font-weight: 700;
+  margin: 0 0 8px;
+  letter-spacing: -0.3px;
 }
 
 .results-header p {
-  color: #64748b;
-  font-size: 16px;
+  color: #4a5568;
+  font-size: 15px;
+  margin: 0;
 }
 
+/* ── Content container ──────────────────────────────────── */
 .results-container {
   flex: 1;
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 16px;
 }
 
+/* ── Section headings ───────────────────────────────────── */
+.section-heading {
+  color: #0d1f3c;
+  font-size: 17px;
+  font-weight: 600;
+  margin: 0 0 16px;
+}
+
+/* ── Risk card ──────────────────────────────────────────── */
 .risk-card {
-  background: white;
-  border-radius: 12px;
-  padding: 30px;
+  background: #ffffff;
+  border-radius: 8px;
+  padding: 28px;
   border-left: 4px solid;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .risk-badge {
   display: inline-block;
-  color: white;
-  padding: 8px 16px;
+  color: #ffffff;
+  padding: 6px 14px;
   border-radius: 6px;
   font-weight: 600;
+  font-size: 14px;
   margin-bottom: 20px;
 }
 
@@ -50,35 +78,67 @@
 }
 
 .score-label {
-  color: #64748b;
-  font-size: 14px;
-  margin: 0 0 10px 0;
+  color: #4a5568;
+  font-size: 13px;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
 }
 
 .score-value {
-  color: #1e293b;
+  color: #0d1f3c;
   font-size: 48px;
-  font-weight: bold;
+  font-weight: 800;
   margin: 0;
+  letter-spacing: -1px;
 }
 
-.subscores {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20px;
-}
-
-.subscore-item {
-  background: white;
-  padding: 20px;
+/* ── Subscores table ────────────────────────────────────── */
+.subscores-section {
+  background: #ffffff;
+  padding: 24px;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
-.subscore-item h4 {
-  color: #1e293b;
-  margin: 0 0 15px 0;
-  font-size: 16px;
+.subscores-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 15px;
+}
+
+.subscores-table thead tr {
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.subscores-table th {
+  text-align: left;
+  color: #4a5568;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 0 0 10px;
+}
+
+.subscores-table th:not(:first-child) {
+  text-align: center;
+}
+
+.subscores-table td {
+  padding: 12px 0;
+  color: #0d1f3c;
+  vertical-align: middle;
+  border-bottom: 1px solid #f0f4f8;
+}
+
+.subscores-table td:not(:first-child) {
+  text-align: center;
+  font-weight: 600;
+}
+
+.subscores-table td:last-child {
+  min-width: 120px;
 }
 
 .subscore-bar {
@@ -86,79 +146,76 @@
   background: #e2e8f0;
   border-radius: 4px;
   overflow: hidden;
-  margin-bottom: 10px;
 }
 
 .subscore-fill {
   height: 100%;
+  border-radius: 4px;
   transition: width 0.5s ease;
 }
 
-.subscore-value {
-  color: #64748b;
-  font-size: 14px;
-  margin: 0;
+.subscore-fill--inattention {
+  background: linear-gradient(90deg, #0066CC, #0052a3);
 }
 
+.subscore-fill--hyperactivity {
+  background: linear-gradient(90deg, #6b48d4, #5235b3);
+}
+
+/* ── Interpretation card ────────────────────────────────── */
 .interpretation-card {
-  background: white;
-  padding: 25px;
+  background: #ffffff;
+  padding: 24px;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.interpretation-card h3 {
-  color: #1e293b;
-  margin: 0 0 15px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .interpretation-message {
-  color: #1e293b;
+  color: #0d1f3c;
   font-size: 16px;
-  line-height: 1.6;
-  margin: 0 0 15px 0;
+  line-height: 1.65;
+  margin: 0 0 12px;
 }
 
 .interpretation-details {
-  color: #64748b;
+  color: #4a5568;
   font-size: 15px;
-  line-height: 1.6;
+  line-height: 1.65;
   margin: 0;
 }
 
+/* ── Disclaimer card ────────────────────────────────────── */
 .disclaimer-card {
-  background: #fef3c7;
+  background: #fdf6ec;
   padding: 20px;
   border-radius: 8px;
-  border-left: 4px solid #f59e0b;
+  border-left: 4px solid #D4A574;
 }
 
-.disclaimer-card h4 {
-  color: #92400e;
-  margin: 0 0 15px 0;
+.disclaimer-heading {
+  color: #7a4a0a;
+  font-size: 15px;
+  font-weight: 600;
+  margin: 0 0 14px;
 }
 
 .disclaimer-card p {
-  color: #78350f;
+  color: #5c3a0e;
   font-size: 14px;
   line-height: 1.6;
-  margin: 0 0 12px 0;
+  margin: 0 0 10px;
 }
 
 .disclaimer-card p:last-child {
   margin-bottom: 0;
 }
 
+/* ── Next steps card ────────────────────────────────────── */
 .next-steps-card {
-  background: white;
-  padding: 20px;
+  background: #ffffff;
+  padding: 24px;
   border-radius: 8px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-}
-
-.next-steps-card h4 {
-  color: #1e293b;
-  margin: 0 0 15px 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
 }
 
 .next-steps-card ul {
@@ -168,51 +225,85 @@
 }
 
 .next-steps-card li {
-  color: #475569;
-  padding: 8px 0;
-  padding-left: 24px;
+  color: #2d3748;
+  padding: 8px 0 8px 28px;
   position: relative;
+  font-size: 15px;
+  line-height: 1.5;
+  border-bottom: 1px solid #f0f4f8;
 }
 
-.next-steps-card li:before {
+.next-steps-card li:last-child {
+  border-bottom: none;
+}
+
+.next-steps-card li::before {
   content: "✓";
   position: absolute;
   left: 0;
-  color: #10b981;
-  font-weight: bold;
+  color: #11863F;
+  font-weight: 700;
 }
 
+/* ── Footer ─────────────────────────────────────────────── */
 .results-footer {
-  margin-top: 40px;
+  margin-top: 32px;
   text-align: center;
 }
 
 .retake-button {
-  padding: 12px 30px;
-  background: #3b82f6;
-  color: white;
-  border: none;
+  padding: 13px 36px;
+  background: #0066CC;
+  color: #ffffff;
+  border: 2px solid transparent;
   border-radius: 8px;
   font-size: 16px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
 }
 
 .retake-button:hover {
-  background: #2563eb;
+  background: #0052a3;
+  box-shadow: 0 2px 8px rgba(0, 102, 204, 0.3);
 }
 
+.retake-button:focus-visible {
+  outline: 3px solid #0066CC;
+  outline-offset: 3px;
+  box-shadow: 0 0 0 5px rgba(0, 102, 204, 0.18);
+}
+
+/* ── Responsive ─────────────────────────────────────────── */
 @media (max-width: 600px) {
-  .subscores {
-    grid-template-columns: 1fr;
+  .results-page {
+    padding: 16px 12px;
   }
 
   .score-value {
     font-size: 36px;
   }
 
-  .results-container {
-    gap: 15px;
+  .subscores-table th:nth-child(3),
+  .subscores-table td:nth-child(3) {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .results-page {
+    max-width: 720px;
+    margin: 0 auto;
+    padding: 40px 24px;
+  }
+
+  .results-header h1 {
+    font-size: 30px;
+  }
+}
+
+@media (min-width: 1440px) {
+  .results-page {
+    max-width: 800px;
   }
 }
