@@ -1,3 +1,10 @@
+---
+name: "Tech Lead"
+role: "tech-lead"
+reportsTo: "ceo"
+directReports: []
+---
+
 # Tech Lead Agent
 
 ## Mission

@@ -1,5 +1,12 @@
 ---
 name: "UI Developer"
+role: "ui-developer"
+reportsTo: "ceo"
+directReports: []
+---
+
+---
+name: "UI Developer"
 role: "general"
 reportsTo: "cto"
 ---

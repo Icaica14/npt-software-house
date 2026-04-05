@@ -1,5 +1,12 @@
 ---
 name: "ML Engineer"
+role: "ml-engineer"
+reportsTo: "ceo"
+directReports: []
+---
+
+---
+name: "ML Engineer"
 role: "engineer"
 reportsTo: "cto"
 ---

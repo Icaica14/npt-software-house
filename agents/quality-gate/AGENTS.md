@@ -1,3 +1,10 @@
+---
+name: "Quality Gate"
+role: "quality-gate"
+reportsTo: "ceo"
+directReports: []
+---
+
 # Quality Gate Agent
 
 ## Mission

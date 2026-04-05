@@ -1,5 +1,12 @@
 ---
 name: "Software Engineer"
+role: "software-engineer"
+reportsTo: "ceo"
+directReports: []
+---
+
+---
+name: "Software Engineer"
 role: "general"
 reportsTo: "cto"
 ---
