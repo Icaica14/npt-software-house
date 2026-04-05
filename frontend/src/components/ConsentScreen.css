@@ -1,0 +1,220 @@
+/* ─── ConsentScreen — WCAG 2.1 AA compliant styles ───────────────────────── */
+
+.consent-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.consent-modal {
+  background: #fff;
+  border-radius: 16px;
+  padding: 2rem;
+  max-width: 560px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+}
+
+.consent-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1e3a8a;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.consent-subtitle {
+  font-size: 0.88rem;
+  color: #6b7280;
+  margin-top: 0.3rem;
+  margin-bottom: 0;
+}
+
+/* Warning alert banner */
+.consent-alert {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+  padding: 0.9rem 1rem;
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.95rem;
+  color: #92400e;
+}
+
+.consent-alert-icon {
+  font-size: 1.1rem;
+  flex-shrink: 0;
+}
+
+/* Sections */
+.consent-section {
+  margin-top: 1.25rem;
+}
+
+.consent-section-heading {
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: #374151;
+  margin: 0 0 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Green checkmark list */
+.consent-check-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.consent-check-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: #374151;
+  line-height: 1.5;
+}
+
+.consent-check-list li span {
+  color: #059669;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+/* Warning list */
+.consent-warn-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  background: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  border-radius: 0 8px 8px 0;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.consent-warn-list li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: #78350f;
+  line-height: 1.5;
+}
+
+.consent-warn-list li span {
+  flex-shrink: 0;
+}
+
+/* Privacy list */
+.consent-privacy-list {
+  list-style: none;
+  padding: 0.75rem 1rem;
+  margin: 0;
+  background: #f0fdf4;
+  border-left: 4px solid #059669;
+  border-radius: 0 8px 8px 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.consent-privacy-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.88rem;
+  color: #065f46;
+  line-height: 1.5;
+}
+
+/* Checkboxes */
+.consent-checkboxes {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem;
+  background: #eff6ff;
+  border-radius: 10px;
+  border: 1px solid #bfdbfe;
+}
+
+.consent-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  cursor: pointer;
+  font-size: 0.88rem;
+  color: #1e3a8a;
+  line-height: 1.55;
+}
+
+.consent-checkbox {
+  margin-top: 0.1rem;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  cursor: pointer;
+  accent-color: #1e40af;
+}
+
+.consent-checkbox:focus-visible {
+  outline: 3px solid #1e40af;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Buttons */
+.consent-btn-primary {
+  margin-top: 1.25rem;
+  width: 100%;
+  padding: 0.9rem;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(30, 64, 175, 0.3);
+  transition: box-shadow 0.2s ease, transform 0.1s ease;
+}
+
+.consent-btn-primary:hover {
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.35);
+  transform: translateY(-1px);
+}
+
+.consent-btn-primary:focus-visible {
+  outline: 3px solid #1e40af;
+  outline-offset: 3px;
+}
+
+.consent-btn-disabled {
+  margin-top: 1.25rem;
+  width: 100%;
+  padding: 0.9rem;
+  background: #e5e7eb;
+  color: #9ca3af;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: not-allowed;
+}

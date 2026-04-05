@@ -413,26 +413,33 @@ export default function ResultsPage({ result, onRetake }) {
             </Section>
 
             {/* ── Disclaimer ── */}
-            <div style={styles.disclaimer} role="note" aria-label="Medical disclaimer">
+            <div style={styles.disclaimer} role="note" aria-label="Important medical disclaimer">
               <div style={styles.disclaimerHeader}>
                 <span style={styles.disclaimerIcon} aria-hidden="true">⚠️</span>
-                <span style={styles.disclaimerBold}>Professional Evaluation Strongly Recommended</span>
+                <span style={styles.disclaimerBold}>IMPORTANT MEDICAL DISCLAIMER</span>
               </div>
               <p style={styles.disclaimerBody}>
-                These results are for <strong>informational and educational purposes only</strong> — they do not
-                constitute a medical diagnosis. ADHD diagnosis requires a comprehensive evaluation by a
-                licensed healthcare professional, including a structured clinical interview, behaviour
-                rating scales, and a review of medical and developmental history.
+                This assessment tool provides <strong>screening information only</strong>. It is NOT a
+                diagnosis of ADHD or any other condition.
               </p>
               <p style={styles.disclaimerBody}>
-                <strong>Self-report bias note:</strong> This tool relies solely on your own responses.
-                Anxiety, depression, sleep disorders, and other conditions can produce overlapping
-                symptoms. A clinician can help distinguish between them.
+                <strong>ADHD diagnosis requires:</strong>
+              </p>
+              <ul style={{ ...styles.disclaimerBody, paddingLeft: '1.25rem', marginBottom: '0.55rem' }}>
+                <li>Comprehensive clinical interview</li>
+                <li>Psychological / neuropsychological testing</li>
+                <li>Review of developmental history</li>
+                <li>Rule-out of other conditions (thyroid, sleep, anxiety, etc.)</li>
+                <li>Evaluation by a qualified healthcare provider</li>
+              </ul>
+              <p style={styles.disclaimerBody}>
+                Your score reflects self-reported traits that <em>may</em> be consistent with ADHD,
+                but many other conditions (anxiety, depression, sleep disorders, PTSD) can produce
+                similar symptoms.
               </p>
               <p style={{ ...styles.disclaimerBody, marginBottom: 0 }}>
-                <strong>Accessibility note:</strong> This screener works best as a starting point for
-                self-reflection and conversation with a healthcare provider. It is not a substitute for
-                a professional assessment.
+                This tool is provided for informational purposes only. The creators are not liable
+                for any decision or action taken based on these results.
               </p>
             </div>
 
