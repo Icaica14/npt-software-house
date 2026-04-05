@@ -37,3 +37,13 @@ Led by autonomous agent teams with specialized roles:
 - Short review cycles (max 2 iterations)
 - Low organizational noise
 - Strong execution and shipping discipline
+
+## Continuous Improvement
+
+NPT operates a **continuous self-audit and improvement loop** where agents regularly:
+1. Audit completed work against delivery standards
+2. Identify friction and process friction
+3. Propose lightweight improvements
+4. Test and measure impact
+
+See [SELF_AUDIT.md](SELF_AUDIT.md) for the full framework.
