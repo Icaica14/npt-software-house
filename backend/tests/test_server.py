@@ -139,3 +139,82 @@ def test_health_check():
     resp = client.get("/health")
     assert resp.status_code == 200
     assert resp.json() == {"status": "ok"}
+
+
+# ---------------------------------------------------------------------------
+# GET /api/quiz/model-info
+# ---------------------------------------------------------------------------
+
+def test_model_info_returns_200():
+    resp = client.get("/api/quiz/model-info")
+    assert resp.status_code == 200
+
+
+def test_model_info_has_required_top_level_keys():
+    resp = client.get("/api/quiz/model-info")
+    data = resp.json()
+    required_keys = {
+        "model_architecture",
+        "training_data_summary",
+        "performance_metrics",
+        "feature_importance",
+        "top_10_predictive_question_ids",
+        "known_limitations",
+        "reliability",
+    }
+    assert required_keys.issubset(set(data.keys()))
+
+
+def test_model_info_feature_importance_has_20_items():
+    resp = client.get("/api/quiz/model-info")
+    data = resp.json()
+    fi = data["feature_importance"]
+    assert len(fi) == 20
+
+
+def test_model_info_feature_importance_item_shape():
+    resp = client.get("/api/quiz/model-info")
+    data = resp.json()
+    item = data["feature_importance"][0]
+    assert set(item.keys()) == {"question_id", "question_text", "importance", "top_predictor"}
+    assert isinstance(item["question_id"], int)
+    assert isinstance(item["importance"], float)
+    assert isinstance(item["top_predictor"], bool)
+    assert isinstance(item["question_text"], str)
+
+
+def test_model_info_top_10_predictive_ids():
+    resp = client.get("/api/quiz/model-info")
+    data = resp.json()
+    top10 = data["top_10_predictive_question_ids"]
+    assert len(top10) == 10
+    assert all(1 <= qid <= 20 for qid in top10)
+
+
+def test_model_info_performance_metrics_fields():
+    resp = client.get("/api/quiz/model-info")
+    data = resp.json()
+    metrics = data["performance_metrics"]
+    assert "accuracy" in metrics
+    assert "auc" in metrics
+    assert "sensitivity" in metrics
+    assert "specificity" in metrics
+
+
+def test_model_info_known_limitations_present():
+    resp = client.get("/api/quiz/model-info")
+    data = resp.json()
+    limitations = data["known_limitations"]
+    assert len(limitations) >= 3
+    types = [lim["type"] for lim in limitations]
+    assert "dataset_bias" in types
+    assert "age_range" in types
+    assert "gender_effects" in types
+
+
+def test_model_info_is_valid_json():
+    import json
+    resp = client.get("/api/quiz/model-info")
+    assert resp.status_code == 200
+    reparsed = json.loads(resp.text)
+    assert isinstance(reparsed, dict)

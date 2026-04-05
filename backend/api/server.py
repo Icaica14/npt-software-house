@@ -10,6 +10,7 @@ from backend.api.quiz import (
     Question,
     ScoreResult,
     calculate_score_from_dict,
+    get_model_info,
     get_question_by_id,
     get_shuffled_questions,
 )
@@ -60,6 +61,25 @@ def submit_quiz(body: SubmitRequest) -> ScoreResult:
         return calculate_score_from_dict(body.answers)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+@app.get("/api/quiz/model-info")
+def model_info() -> dict:
+    """Return model architecture, training data summary, performance metrics,
+    feature importance for all 20 scoring questions, and known limitations.
+
+    Response fields:
+    - model_architecture: type, description, subscales, score_range, response_scale
+    - training_data_summary: source, citation, normative_sample_size, population,
+      population_mean, population_sd, age_range
+    - performance_metrics: accuracy, auc, sensitivity, specificity
+    - feature_importance: list of {question_id, question_text, importance, top_predictor}
+    - top_10_predictive_question_ids: list of 10 most predictive question IDs
+    - known_limitations: list of {type, description} covering dataset_bias, age_range,
+      gender_effects, self_report_bias, screening_only
+    - reliability: split_half_reliability, method, note
+    """
+    return get_model_info()
 
 
 @app.get("/health")
