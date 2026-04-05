@@ -694,6 +694,18 @@ MODEL_INFO = {
 }
 
 
+def get_feature_importance() -> Dict[str, float]:
+    """Return a dict mapping question IDs (as 'question_N' strings) to importance scores.
+
+    Returns the top 10 most predictive questions only.
+    Values sum to approximately 1.0.
+    """
+    return {
+        f"question_{qid}": FEATURE_IMPORTANCE[qid]
+        for qid in TOP_10_PREDICTIVE_QUESTION_IDS
+    }
+
+
 def get_model_info() -> dict:
     """Return model architecture, training data summary, performance metrics,
     feature importance, and known limitations."""

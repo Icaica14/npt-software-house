@@ -12,6 +12,8 @@ from backend.api.quiz import (
     percentile_from_raw_score,
     confidence_interval_95,
     test_retest_reliability,
+    get_feature_importance,
+    get_model_info,
     QUESTIONS,
     DISTRACTOR_QUESTION_IDS,
     POPULATION_REFERENCE,
@@ -262,3 +264,77 @@ def test_api_quiz_submit_filters_distractors():
     assert response.status_code == 200
     data = response.json()
     assert data["total_score"] == 40  # 20 questions × 2
+
+
+# ---------------------------------------------------------------------------
+# DHD-15: ML Model Visualization & Interpretation
+# ---------------------------------------------------------------------------
+
+def test_feature_importance_structure():
+    """get_feature_importance() returns a dict with string keys and float values."""
+    fi = get_feature_importance()
+    assert isinstance(fi, dict)
+    assert len(fi) > 0
+    for key, val in fi.items():
+        assert isinstance(key, str)
+        assert key.startswith("question_")
+        assert isinstance(val, float)
+
+
+def test_feature_importance_top_10():
+    """get_feature_importance() returns exactly 10 entries; question_8 has the highest score."""
+    fi = get_feature_importance()
+    assert len(fi) == 10
+    assert "question_8" in fi
+    assert fi["question_8"] == 0.15
+    # Top 10 values sum to at least 0.9 (covers the majority of predictive weight)
+    assert sum(fi.values()) >= 0.9
+
+
+def test_model_info_structure():
+    """get_model_info() returns a dict with required top-level keys."""
+    info = get_model_info()
+    required_keys = {
+        "model_architecture",
+        "training_data_summary",
+        "performance_metrics",
+        "feature_importance",
+        "known_limitations",
+        "reliability",
+        "top_10_predictive_question_ids",
+    }
+    assert required_keys.issubset(info.keys())
+
+
+def test_model_info_performance_values():
+    """Performance metrics must be floats in [0, 1]."""
+    info = get_model_info()
+    perf = info["performance_metrics"]
+    for field in ("accuracy", "auc", "sensitivity", "specificity"):
+        assert field in perf
+        assert 0.0 <= perf[field] <= 1.0
+
+
+def test_model_info_training_data():
+    """Training data summary must reference ASRS and include sample size."""
+    info = get_model_info()
+    td = info["training_data_summary"]
+    assert "ASRS" in td["source"]
+    assert td["normative_sample_size"] > 0
+    assert "population_mean" in td
+    assert "population_sd" in td
+
+
+def test_api_model_info_endpoint():
+    """GET /api/quiz/model-info returns 200 with valid JSON including feature_importance."""
+    response = api_client.get("/api/quiz/model-info")
+    assert response.status_code == 200
+    data = response.json()
+    assert "feature_importance" in data
+    assert "performance_metrics" in data
+    assert "known_limitations" in data
+    perf = data["performance_metrics"]
+    assert perf["accuracy"] == 0.82
+    assert perf["auc"] == 0.90
+    assert perf["sensitivity"] == 0.80
+    assert perf["specificity"] == 0.85
