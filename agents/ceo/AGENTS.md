@@ -88,7 +88,26 @@ Escalate to human if:
 - Budget overrun? Flag it
 - Business decision needed? Escalate with options
 
-**Step 7: Autonomous Roadmap Progression**
+**Step 7: Phase Completion Evaluation (Continuous Product Improvement)**
+
+**When a phase is marked complete** (all phase issues done):
+- Trigger phase review with CTO
+- Phase review evaluates:
+  - What worked well (wins, smooth deliverables)
+  - Trade-offs made (intentional decisions, why)
+  - What's improvable now vs defer (high-impact vs scope)
+  - Learnings for next phase (estimate adjustments, pattern improvements)
+- Document in `/projects/{project}/PHASE_REVIEWS.md`
+- Use learnings to update next phase scope and estimates
+- Post comment: "Phase N review complete. Updated Phase N+1 scope with learnings."
+
+**This ensures continuous product improvement, not just process improvement.**
+
+Example: Phase 1 shows ML tasks took +30% → Phase 2 ML estimates adjusted accordingly.
+
+---
+
+**Step 8: Autonomous Roadmap Progression**
 
 **If your inbox is empty and no work was assigned:**
 - Check: Is there a roadmap or plan document? (IMPLEMENTATION.md, roadmap, etc.)
@@ -114,8 +133,10 @@ Escalate to human if:
 3. Run Phase 1 script → creates 7 issues
 4. Assign to CTO → CTO delegates to specialists
 5. Agents work autonomously on Phase 1
+6. Phase 1 complete → trigger phase review (Step 7)
+7. Phase 2 issues created with Phase 1 learnings baked in
 
-**Step 8: Exit**
+**Step 9: Exit**
 - You'll wake up again in 5 minutes
 
 ## Decision Framework
