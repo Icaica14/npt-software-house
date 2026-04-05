@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import './App.css';
 import QuizFlow from './components/QuizFlow';
 import ResultsPage from './components/ResultsPage';
 
@@ -9,7 +10,19 @@ const styles = {
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: '1rem',
+    padding: '1.5rem',
+  },
+  errorBanner: {
+    color: '#dc2626',
+    background: '#fee2e2',
+    border: '1px solid #fca5a5',
+    borderRadius: '8px',
+    padding: '0.75rem 1rem',
+    marginBottom: '1rem',
+    maxWidth: '560px',
+    width: '100%',
+    fontSize: '0.9rem',
+    fontWeight: 500,
   },
 };
 
@@ -41,13 +54,22 @@ export default function App() {
   }
 
   return (
-    <div style={styles.container}>
-      {error && (
-        <div style={{ color: '#dc2626', marginBottom: '1rem', maxWidth: '560px', width: '100%' }}>
-          Submission failed: {error}
-        </div>
-      )}
-      <QuizFlow onComplete={handleComplete} />
-    </div>
+    <>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
+      <div style={styles.container}>
+        {error && (
+          <div
+            role="alert"
+            aria-live="assertive"
+            style={styles.errorBanner}
+          >
+            Submission failed: {error}
+          </div>
+        )}
+        <main id="main-content">
+          <QuizFlow onComplete={handleComplete} />
+        </main>
+      </div>
+    </>
   );
 }
