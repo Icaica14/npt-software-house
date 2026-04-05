@@ -5,6 +5,8 @@ from fastapi.testclient import TestClient
 
 from backend.api.quiz import (
     calculate_score,
+    calculate_percentile_score,
+    calculate_test_retest_reliability,
     shuffle_questions,
     add_distractor_questions,
     cronbach_alpha,
@@ -323,6 +325,79 @@ def test_model_info_training_data():
     assert td["normative_sample_size"] > 0
     assert "population_mean" in td
     assert "population_sd" in td
+
+
+# ---------------------------------------------------------------------------
+# DHD-21: Scientific Scoring & Percentile Calculation (6 new tests)
+# ---------------------------------------------------------------------------
+
+def test_calculate_percentile_score():
+    """Raw score converts to a valid percentile in [0, 100]."""
+    result = calculate_percentile_score(60)
+    assert 0 <= result["percentile"] <= 100
+    # Score above mean=50 should yield percentile above 50
+    assert result["percentile"] > 50
+
+
+def test_percentile_confidence_interval():
+    """Confidence interval is ±12 points (1 std) applied to raw score."""
+    result = calculate_percentile_score(60)
+    # CI bounds derived from raw scores 48 and 72 (60 ± 12)
+    assert "confidence_interval_low" in result
+    assert "confidence_interval_high" in result
+    # low CI must come from raw score 48, high CI from raw score 72
+    low_result = calculate_percentile_score(48)
+    high_result = calculate_percentile_score(72)
+    assert result["confidence_interval_low"] == low_result["percentile"]
+    assert result["confidence_interval_high"] == high_result["percentile"]
+
+
+def test_percentile_interpretation():
+    """Risk level (interpretation) is derived from the computed percentile."""
+    high_result = calculate_percentile_score(75)  # well above mean → high suspicion
+    assert high_result["interpretation"] == "High suspicion of ADHD"
+
+    low_result = calculate_percentile_score(25)  # well below mean → low suspicion
+    assert low_result["interpretation"] == "Low suspicion of ADHD"
+
+
+def test_test_retest_reliability_stable():
+    """Low variance answers (uniform responses) yield stable=True."""
+    # All 2s: variance = 0
+    answers = [2] * 20
+    result = calculate_test_retest_reliability(answers)
+    assert result["stable"] is True
+    assert result["variance"] < 0.5
+    assert 0.0 <= result["reliability_score"] <= 1.0
+
+
+def test_test_retest_reliability_unstable():
+    """High variance answers (alternating extremes) yield stable=False."""
+    # Alternating 1 and 4: variance > 0.5
+    answers = [1, 4] * 10
+    result = calculate_test_retest_reliability(answers)
+    assert result["stable"] is False
+    assert result["variance"] >= 0.5
+
+
+def test_endpoint_returns_all_metrics():
+    """POST /api/quiz/submit returns both assessment (percentile) and reliability blocks."""
+    answers = {str(i): 3 for i in range(1, 21)}
+    response = api_client.post("/api/quiz/submit", json={"answers": answers})
+    assert response.status_code == 200
+    data = response.json()
+
+    assert "assessment" in data
+    assert "percentile" in data["assessment"]
+    assert "confidence_interval" in data["assessment"]
+    assert 0 <= data["assessment"]["percentile"] <= 100
+    assert "low" in data["assessment"]["confidence_interval"]
+    assert "high" in data["assessment"]["confidence_interval"]
+
+    assert "reliability" in data
+    assert "cronbach_alpha" in data["reliability"]
+    assert "test_retest_score" in data["reliability"]
+    assert "stable" in data["reliability"]
 
 
 def test_api_model_info_endpoint():

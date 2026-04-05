@@ -10,7 +10,9 @@ from backend.api.quiz import (
     DISTRACTOR_QUESTION_IDS,
     Question,
     ScoreResult,
+    calculate_percentile_score,
     calculate_score_from_dict,
+    calculate_test_retest_reliability,
     get_model_info,
     get_question_by_id,
     get_shuffled_questions,
@@ -78,18 +80,36 @@ def submit_quiz(body: SubmitRequest) -> dict:
     scoring_list = [scoring_answers.get(i, body.answers.get(i)) for i in range(1, 21)]
     consistency = validate_response_consistency(scoring_list)
 
+    # Percentile and confidence interval using DHD-21 scoring functions
+    percentile_data = calculate_percentile_score(result.total_score)
+    retest = calculate_test_retest_reliability(scoring_list)
+
     alpha = result.cronbach_alpha
     if alpha >= 0.7:
-        interpretation = "Good"
+        reliability_interpretation = "High reliability - results are trustworthy"
     elif alpha >= 0.5:
-        interpretation = "Adequate"
+        reliability_interpretation = "Moderate reliability - results are adequate"
     else:
-        interpretation = "Poor"
+        reliability_interpretation = "Low reliability - results may be unreliable"
 
     return {
         **result.model_dump(),
         "consistency": consistency,
-        "reliability": {"cronbach_alpha": alpha, "interpretation": interpretation},
+        "assessment": {
+            "raw_score": result.total_score,
+            "percentile": percentile_data["percentile"],
+            "confidence_interval": {
+                "low": percentile_data["confidence_interval_low"],
+                "high": percentile_data["confidence_interval_high"],
+            },
+            "risk_level": result.risk_level,
+        },
+        "reliability": {
+            "cronbach_alpha": alpha,
+            "test_retest_score": retest["reliability_score"],
+            "stable": retest["stable"],
+            "interpretation": reliability_interpretation,
+        },
     }
 
 

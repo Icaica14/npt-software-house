@@ -726,6 +726,84 @@ def get_model_info() -> dict:
     }
 
 
+# ---------------------------------------------------------------------------
+# DHD-21: New scoring and reliability functions
+# ---------------------------------------------------------------------------
+
+# Population norms for calculate_percentile_score (mean=50, std=12 per task spec)
+_PERC_MEAN: float = 50.0
+_PERC_STD: float = 12.0
+
+
+def calculate_percentile_score(raw_score: int) -> Dict:
+    """Convert a raw total score (20-80) to a percentile with 68% confidence interval.
+
+    Uses population norms (mean=50, std=12). The confidence interval is ±1 std
+    applied directly to the raw score before converting to percentile bounds.
+
+    Args:
+        raw_score: Integer total score in [20, 80].
+
+    Returns:
+        Dict with keys: percentile (int), confidence_interval_low (int),
+        confidence_interval_high (int), interpretation (str).
+    """
+    z = (raw_score - _PERC_MEAN) / _PERC_STD
+    percentile = max(0, min(100, round(_norm_cdf(z) * 100)))
+
+    ci_low_score = raw_score - _PERC_STD
+    ci_high_score = raw_score + _PERC_STD
+    z_low = (ci_low_score - _PERC_MEAN) / _PERC_STD
+    z_high = (ci_high_score - _PERC_MEAN) / _PERC_STD
+    confidence_interval_low = max(0, min(100, round(_norm_cdf(z_low) * 100)))
+    confidence_interval_high = max(0, min(100, round(_norm_cdf(z_high) * 100)))
+
+    if percentile >= 75:
+        interpretation = "High suspicion of ADHD"
+    elif percentile >= 50:
+        interpretation = "Moderate suspicion of ADHD"
+    else:
+        interpretation = "Low suspicion of ADHD"
+
+    return {
+        "percentile": percentile,
+        "confidence_interval_low": confidence_interval_low,
+        "confidence_interval_high": confidence_interval_high,
+        "interpretation": interpretation,
+    }
+
+
+def calculate_test_retest_reliability(answers: List[int]) -> Dict:
+    """Measure answer variability across a single set of 20 responses.
+
+    Lower variance indicates more stable, consistent responding.
+
+    Args:
+        answers: List of 20 integer answers, each in [1, 4].
+
+    Returns:
+        Dict with keys: reliability_score (float 0-1), variance (float), stable (bool).
+    """
+    n = len(answers)
+    mean = sum(answers) / n
+    variance = sum((a - mean) ** 2 for a in answers) / n
+
+    # Max possible variance for 1-4 scale is 2.25 (half at 1, half at 4)
+    max_variance = 2.25
+    reliability_score = round(max(0.0, 1.0 - min(1.0, variance / max_variance)), 3)
+    stable = variance < 0.5
+
+    return {
+        "reliability_score": reliability_score,
+        "variance": round(variance, 4),
+        "stable": stable,
+    }
+
+
+# Mark to prevent pytest from treating the above as test functions
+calculate_test_retest_reliability.__test__ = False  # type: ignore[attr-defined]
+
+
 def calculate_score_from_dict(answers_by_id: Dict[int, int]) -> ScoreResult:
     """Calculate score from a mapping of question_id → answer.
 
