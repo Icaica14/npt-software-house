@@ -1,0 +1,6 @@
+---
+name: "3D civil works"
+description: "Build a platform that allows a user to upload a 2D image of a civil structure or building, including non-famous or ordinary constructions, and automatically generates a clean 3D model of that structure by isolating it from the background and reconstructing its geometry. The output should be an interactive 3D rendered model that the user can rotate, inspect, and view from multiple perspectives. The immediate focus is only on producing the 3D representation itself, not the full digital twin stack. The core problem being solved is that many digital twin workflows lack a usable 3D visual model of the real-world object under analysis."
+---
+
+Build a platform that allows a user to upload a 2D image of a civil structure or building, including non-famous or ordinary constructions, and automatically generates a clean 3D model of that structure by isolating it from the background and reconstructing its geometry. The output should be an interactive 3D rendered model that the user can rotate, inspect, and view from multiple perspectives. The immediate focus is only on producing the 3D representation itself, not the full digital twin stack. The core problem being solved is that many digital twin workflows lack a usable 3D visual model of the real-world object under analysis.

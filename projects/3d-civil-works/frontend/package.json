@@ -1,0 +1,25 @@
+{
+  "name": "3d-civil-works-viewer",
+  "version": "0.1.0",
+  "description": "Interactive 3D model viewer for civil works reconstruction",
+  "main": "viewer/app.js",
+  "scripts": {
+    "dev": "npx http-server viewer -p 5173 -c-1 --cors",
+    "build": "echo 'Build script placeholder'",
+    "test": "echo 'Test script placeholder'"
+  },
+  "keywords": [
+    "3d",
+    "viewer",
+    "civil-works",
+    "reconstruction"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  },
+  "dependencies": {
+    "three": "^0.183.2"
+  }
+}

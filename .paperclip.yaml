@@ -1,0 +1,106 @@
+schema: "paperclip/v1"
+agents:
+  ceo:
+    role: "ceo"
+    icon: "crown"
+    capabilities: "Executive leadership and strategic synthesis. Cannot autonomously delegate due to sandbox API restrictions. Manual use only - invoke when human needs high-level task breakdown, synthesis, or vision refinement. Reads issues from git files and issue comments."
+    adapter:
+      config:
+        dangerouslySkipPermissions: true
+        graceSec: 30
+        model: "claude-sonnet-4-6"
+      type: "claude_local"
+    permissions:
+      canCreateAgents: true
+
+  tech-lead:
+    role: "general"
+    icon: "zap"
+    capabilities: "Technical leader for architecture and unblocking builders. Owns technical decisions and strategic direction. Coordinates via issue comments and @mentions. Reads .ROADMAP.md for context. Posts guidance, architecture decisions, and unblock suggestions. Cannot create subtasks (sandbox limitation)."
+    adapter:
+      config:
+        dangerouslySkipPermissions: true
+        model: "claude-sonnet-4-6"
+      type: "claude_local"
+    runtime:
+      heartbeat:
+        enabled: true
+        interval: 600
+
+  software-engineer:
+    role: "general"
+    icon: "code"
+    capabilities: "Full-stack builder specializing in backend, frontend, and API integration. Owns implementation of assigned features. Reads issue specifications from GitHub. Writes code, commits, runs tests. Posts progress and blockers in issue comments. Works autonomously once task is assigned."
+    adapter:
+      config:
+        dangerouslySkipPermissions: true
+        model: "claude-sonnet-4-6"
+      type: "claude_local"
+    runtime:
+      heartbeat:
+        enabled: true
+        interval: 300
+
+  ml-engineer:
+    role: "engineer"
+    icon: "brain"
+    capabilities: "ML specialist owning model integration, training, and optimization. Reads issue specifications. Experiments with models, trains, benchmarks. Commits work and documents results. Works autonomously on assigned ML tasks within scope."
+    adapter:
+      config:
+        dangerouslySkipPermissions: true
+        model: "claude-sonnet-4-6"
+      type: "claude_local"
+    runtime:
+      heartbeat:
+        enabled: true
+        interval: 300
+
+  ui-developer:
+    role: "general"
+    icon: "sparkles"
+    capabilities: "Frontend specialist owning UI/UX implementation. Builds React components, polishes interactions, implements design specs. Commits to main, runs tests. Works autonomously on assigned UI and frontend tasks."
+    adapter:
+      config:
+        dangerouslySkipPermissions: true
+        model: "claude-sonnet-4-6"
+      type: "claude_local"
+    runtime:
+      heartbeat:
+        enabled: true
+        interval: 300
+
+  quality-gate:
+    role: "general"
+    icon: "badge"
+    capabilities: "Quality reviewer and delivery gate enforcer. Validates completed work against delivery standards: README present and complete, test coverage sufficient, commit messages clear, known limitations documented, output discoverable. Triggered when code ready for review. Enforces maximum 2 review cycles per feature."
+    adapter:
+      config:
+        dangerouslySkipPermissions: true
+        maxTurnsPerRun: 120
+        model: "claude-sonnet-4-6"
+        timeoutSec: 300
+      type: "claude_local"
+
+projects:
+  3d-civil-works:
+    color: "#14b8a6"
+    status: "in_progress"
+  adhd-assessment-dashboard:
+    color: "#f59e0b"
+    status: "in_progress"
+  onboarding:
+    color: "#6366f1"
+    status: "in_progress"
+
+sidebar:
+  agents:
+    - "software-engineer"
+    - "ml-engineer"
+    - "ui-developer"
+    - "tech-lead"
+    - "quality-gate"
+    - "ceo"
+  projects:
+    - "adhd-assessment-dashboard"
+    - "3d-civil-works"
+    - "onboarding"
