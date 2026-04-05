@@ -1,13 +1,13 @@
-schema: "paperclip/v1"
+schema: paperclip/v1
 agents:
   ceo:
-    role: "ceo"
+    role: ceo
     adapter:
       config:
         dangerouslySkipPermissions: true
         graceSec: 30
-        model: "claude-sonnet-4-6"
-      type: "claude_local"
+        model: claude-sonnet-4-6
+      type: claude_local
     runtime:
       heartbeat:
         enabled: true
@@ -15,105 +15,121 @@ agents:
     permissions:
       canCreateAgents: true
   cto:
-    role: "cto"
-    icon: "circuit-board"
-    capabilities: "Owns technical stack, AI architecture, engineering hiring, and delivery quality. Has production AI/LLM experience and strong engineering leadership skills."
+    role: cto
+    icon: circuit-board
+    capabilities: Owns technical stack, AI architecture, engineering hiring, and delivery
+      quality. Has production AI/LLM experience and strong engineering leadership
+      skills.
     adapter:
       config:
         dangerouslySkipPermissions: true
-        model: "claude-sonnet-4-6"
-      type: "claude_local"
+        model: claude-sonnet-4-6
+      type: claude_local
     runtime:
       heartbeat:
         enabled: true
   delivery-release-manager:
-    role: "general"
-    icon: "package"
-    capabilities: "Owns delivery quality, artifact discoverability, and release readiness for all implementation work. Enforces a hard delivery gate before work can be considered truly complete: exact output location, commit hash, changed-file list, README, setup/run/test instructions, and known limitations must all be present. Verifies that outputs are easy to find, easy to run, and easy to evaluate. Acts as final handoff owner for the board."
+    role: general
+    icon: package
+    capabilities: 'Owns delivery quality, artifact discoverability, and release readiness
+      for all implementation work. Enforces a hard delivery gate before work can be
+      considered truly complete: exact output location, commit hash, changed-file
+      list, README, setup/run/test instructions, and known limitations must all be
+      present. Verifies that outputs are easy to find, easy to run, and easy to evaluate.
+      Acts as final handoff owner for the board.'
     adapter:
       config:
         dangerouslySkipPermissions: true
         maxTurnsPerRun: 120
-        model: "claude-sonnet-4-6"
+        model: claude-sonnet-4-6
         timeoutSec: 300
-      type: "claude_local"
+      type: claude_local
   ml-engineer:
-    role: "engineer"
-    icon: "brain"
-    capabilities: "Expert ML engineer specializing in building, training, and deploying machine learning models for AI-based software products. Proficient in Python, PyTorch/TensorFlow, LLM fine-tuning, RAG pipelines, and MLOps. Drives ML architecture decisions and model quality."
+    role: engineer
+    icon: brain
+    capabilities: Expert ML engineer specializing in building, training, and deploying
+      machine learning models for AI-based software products. Proficient in Python,
+      PyTorch/TensorFlow, LLM fine-tuning, RAG pipelines, and MLOps. Drives ML architecture
+      decisions and model quality.
     adapter:
       config:
         dangerouslySkipPermissions: true
-        model: "claude-sonnet-4-6"
-      type: "claude_local"
+        model: claude-sonnet-4-6
+      type: claude_local
     runtime:
       heartbeat:
         enabled: true
   product-manager:
-    role: "general"
-    icon: "package"
-    capabilities: "Technical product manager specializing in AI-based software products. Owns the product roadmap, translates customer requests into actionable specs, and coordinates between engineering and business stakeholders to drive delivery."
+    role: general
+    icon: package
+    capabilities: Technical product manager specializing in AI-based software products.
+      Owns the product roadmap, translates customer requests into actionable specs,
+      and coordinates between engineering and business stakeholders to drive delivery.
     adapter:
       config:
         dangerouslySkipPermissions: true
-        model: "claude-sonnet-4-6"
-      type: "claude_local"
+        model: claude-sonnet-4-6
+      type: claude_local
     runtime:
       heartbeat:
         enabled: true
   qa-critic:
-    role: "general"
-    icon: "shield"
-    capabilities: "Reviews outputs from all technical agents. Identifies weaknesses, validates deliverables, and enforces delivery standards. Maximum 2 review cycles per task. Biased toward shipping strong, usable output."
+    role: general
+    icon: shield
+    capabilities: Reviews outputs from all technical agents. Identifies weaknesses,
+      validates deliverables, and enforces delivery standards. Maximum 2 review cycles
+      per task. Biased toward shipping strong, usable output.
     adapter:
       config:
         dangerouslySkipPermissions: true
-        model: "claude-sonnet-4-6"
-      type: "claude_local"
+        model: claude-sonnet-4-6
+      type: claude_local
     runtime:
       heartbeat:
         enabled: true
   software-engineer:
-    role: "general"
-    icon: "code"
-    capabilities: "Full-stack software engineer specializing in AI-based software products. Expert in backend (Node.js/Python), frontend (React), and LLM/AI API integration. Responsible for building, shipping, and maintaining product features."
+    role: general
+    icon: code
+    capabilities: Full-stack software engineer specializing in AI-based software products.
+      Expert in backend (Node.js/Python), frontend (React), and LLM/AI API integration.
+      Responsible for building, shipping, and maintaining product features.
     adapter:
       config:
         dangerouslySkipPermissions: true
-        model: "claude-sonnet-4-6"
-      type: "claude_local"
-    runtime:
-      heartbeat:
-        enabled: true
+        model: claude-sonnet-4-6
+      type: claude_local
   ui-developer:
-    role: "general"
-    icon: "sparkles"
-    capabilities: "Expert frontend UI developer specializing in modern web interfaces for AI-based software products. Proficient in React, TypeScript, component libraries, and design systems. Translates design specs into clean, accessible, performant UI code."
+    role: general
+    icon: sparkles
+    capabilities: Expert frontend UI developer specializing in modern web interfaces
+      for AI-based software products. Proficient in React, TypeScript, component libraries,
+      and design systems. Translates design specs into clean, accessible, performant
+      UI code.
     adapter:
       config:
         dangerouslySkipPermissions: true
-        model: "claude-sonnet-4-6"
-      type: "claude_local"
+        model: claude-sonnet-4-6
+      type: claude_local
     runtime:
       heartbeat:
         enabled: true
 projects:
   3d-civil-works:
-    color: "#14b8a6"
-    status: "planned"
+    color: '#14b8a6'
+    status: planned
   onboarding:
-    color: "#6366f1"
-    status: "in_progress"
+    color: '#6366f1'
+    status: in_progress
 sidebar:
   agents:
-    - "ceo"
-    - "cto"
-    - "product-manager"
-    - "software-engineer"
-    - "ml-engineer"
-    - "ui-developer"
-    - "qa-critic"
-    - "delivery-release-manager"
+  - ceo
+  - cto
+  - product-manager
+  - software-engineer
+  - ml-engineer
+  - ui-developer
+  - qa-critic
+  - delivery-release-manager
   projects:
-    - "onboarding"
-    - "3d-civil-works"
+  - onboarding
+  - 3d-civil-works
