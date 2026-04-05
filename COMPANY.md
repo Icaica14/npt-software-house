@@ -57,11 +57,20 @@ See [OPERATING_MANUAL.md](OPERATING_MANUAL.md) for detailed role instructions.
 
 See [COMMUNICATION_PROTOCOL.md](COMMUNICATION_PROTOCOL.md) for the full protocol.
 
-### Continuous Improvement
-NPT operates a **continuous self-audit and improvement loop** where agents regularly:
-1. Audit completed work against delivery standards
-2. Identify friction and process friction
-3. Propose lightweight improvements
-4. Test and measure impact
+### Continuous Improvement (Two Levels)
 
-See [SELF_AUDIT.md](SELF_AUDIT.md) for the full framework.
+**Level 1: Delivery Process Improvement (Org-wide)**
+- Weekly audit of delivery standards, cycle time, handoff quality
+- Agents identify friction in HOW we work
+- Propose lightweight process improvements
+- Test and measure impact
+- See [SELF_AUDIT.md](SELF_AUDIT.md)
+
+**Level 2: Product Improvement (Phase-based)**
+- After each phase completes, evaluate the actual deliverables
+- Analyze trade-offs, identify improvements, extract learnings
+- Decide: improve now (high-impact) or defer to next phase
+- Update next phase scope and estimates with real data
+- See [PHASE_REVIEWS.md](projects/3d-civil-works/PHASE_REVIEWS.md)
+
+**Result:** Continuous feedback loop where each phase learns from the previous, making estimates better, reducing risks, and improving product quality over time.
