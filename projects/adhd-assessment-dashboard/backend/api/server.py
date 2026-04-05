@@ -1,36 +1,46 @@
 # Backend server for ADHD Assessment Dashboard
-# TODO: Implement FastAPI app with:
-# - GET /api/quiz/questions — return question bank
-# - POST /api/quiz/submit — accept answers, return assessment
-# - CORS enabled for frontend
 
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
+from typing import List
+from api.quiz import QUESTIONS, calculate_score
 
 app = FastAPI(title="ADHD Assessment API")
 
 # Enable CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000", "http://localhost:8080"],
+    allow_origins=["http://localhost:3000", "http://localhost:8080", "http://localhost:5173"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
+class QuizSubmission(BaseModel):
+    answers: List[int]
+
 @app.get("/api/quiz/questions")
 async def get_questions():
     """Return question bank for quiz."""
-    # TODO: Implement question endpoint
-    pass
+    return {
+        "questions": QUESTIONS,
+        "count": len(QUESTIONS),
+        "scale": {"min": 1, "max": 4, "labels": ["Never", "Sometimes", "Often", "Very Often"]}
+    }
 
 @app.post("/api/quiz/submit")
-async def submit_quiz(answers: dict):
+async def submit_quiz(submission: QuizSubmission):
     """Submit answers and return assessment."""
-    # TODO: Implement scoring algorithm
-    # Input: {"answers": [1, 2, 1, ...], "version": "v1"}
-    # Output: {"score": 45, "risk_level": "moderate", "inattention": 22, "hyperactivity": 23}
-    pass
+    try:
+        assessment = calculate_score(submission.answers)
+        return {
+            "success": True,
+            "assessment": assessment,
+            "disclaimer": "This is a screening tool only. It is not a medical diagnosis. Please consult a healthcare provider for professional evaluation."
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.get("/health")
 async def health():

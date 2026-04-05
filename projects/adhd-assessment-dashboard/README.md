@@ -19,24 +19,38 @@ cd backend
 pip install -r requirements.txt
 python -m uvicorn api.server:app --reload
 # Server runs on http://localhost:8000
+# API docs available at http://localhost:8000/docs
 ```
 
 ### Setup (Frontend)
 ```bash
 cd frontend
+cp .env.example .env
 npm install
 npm start
 # Frontend runs on http://localhost:3000
 ```
 
-### Test API
+### Run Tests
 ```bash
+cd backend
+pytest tests/ -v
+```
+
+### Test API Endpoints
+```bash
+# Get questions
+curl http://localhost:8000/api/quiz/questions
+
+# Submit answers (example: all 2s)
 curl -X POST http://localhost:8000/api/quiz/submit \
   -H "Content-Type: application/json" \
   -d '{
-    "answers": [1, 2, 1, 3, 2, ...],
-    "version": "v1"
+    "answers": [2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2, 2]
   }'
+
+# Health check
+curl http://localhost:8000/health
 ```
 
 ## Architecture
