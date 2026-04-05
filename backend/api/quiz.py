@@ -7,7 +7,7 @@ and DSM-5 criteria.  Each question has an id, text, and category
 
 from typing import List, Literal
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 
 Category = Literal["inattention", "hyperactivity"]
@@ -183,3 +183,65 @@ def get_question_by_id(question_id: int) -> Question | None:
         if q.id == question_id:
             return q
     return None
+
+
+RiskLevel = Literal["low", "moderate", "high"]
+
+
+class ScoreResult(BaseModel):
+    inattention_score: int
+    hyperactivity_score: int
+    total_score: int
+    risk_level: RiskLevel
+
+    @field_validator("inattention_score", "hyperactivity_score")
+    @classmethod
+    def subscale_in_range(cls, v: int) -> int:
+        if not (10 <= v <= 40):
+            raise ValueError(f"Subscale score {v} out of range 10-40")
+        return v
+
+    @field_validator("total_score")
+    @classmethod
+    def total_in_range(cls, v: int) -> int:
+        if not (20 <= v <= 80):
+            raise ValueError(f"Total score {v} out of range 20-80")
+        return v
+
+
+def calculate_score(answers: List[int]) -> ScoreResult:
+    """Calculate ADHD risk score from 20 answers on a 1-4 scale.
+
+    Args:
+        answers: List of 20 integers, each in range [1, 4].
+                 Index 0 corresponds to question id 1.
+
+    Returns:
+        ScoreResult with subscale scores, total, and risk level.
+
+    Raises:
+        ValueError: if answers length != 20 or any answer not in [1, 4].
+    """
+    if len(answers) != 20:
+        raise ValueError(f"Expected 20 answers, got {len(answers)}")
+    for i, a in enumerate(answers):
+        if a not in (1, 2, 3, 4):
+            raise ValueError(f"Answer at index {i} is {a!r}; must be 1-4")
+
+    inattention_score = sum(answers[0:10])   # items 1-10
+    hyperactivity_score = sum(answers[10:20])  # items 11-20
+    total_score = inattention_score + hyperactivity_score
+
+    if total_score <= 35:
+        risk_level: RiskLevel = "low"
+    elif total_score <= 60:
+        risk_level = "moderate"
+    else:
+        risk_level = "high"
+
+    return ScoreResult(
+        inattention_score=inattention_score,
+        hyperactivity_score=hyperactivity_score,
+        total_score=total_score,
+        risk_level=risk_level,
+    )
