@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3D Civil Works Viewer</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>3D Civil Works Reconstruction</h1>
+            <p>Upload a 2D image of a building or civil structure to generate a 3D model</p>
+        </header>
+
+        <main>
+            <section class="upload-section">
+                <h2>Upload Image</h2>
+                <div class="upload-area" id="uploadArea">
+                    <p>Click to select or drag and drop an image</p>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                </div>
+                <div id="uploadStatus" class="status hidden"></div>
+                <div class="button-group">
+                    <button id="browseBtn" class="btn">Browse Files</button>
+                    <button id="submitBtn" class="btn" disabled>Reconstruct</button>
+                </div>
+            </section>
+
+            <section class="viewer-section">
+                <h2>3D Model Viewer</h2>
+                <div id="viewer" class="viewer">
+                    <p class="placeholder">Upload an image to view the 3D model here</p>
+                </div>
+                <div class="controls">
+                    <p class="info">Rotate: Click + drag | Zoom: Scroll | Reset: Reset View button</p>
+                    <button id="resetView" class="btn secondary" disabled>Reset View</button>
+                    <button id="downloadBtn" class="btn secondary" disabled>Download Model</button>
+                </div>
+            </section>
+        </main>
+
+        <!-- Configuration script: Inject API_BASE_URL here for deployed environments -->
+        <script>
+            // Override API_BASE_URL if needed. Set window.__API_BASE_URL__ before app.js loads
+            // Example: window.__API_BASE_URL__ = "https://api.example.com";
+        </script>
+    </div>
+
+    <!-- Three.js from jsDelivr CDN -->
+    <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/build/three.min.js"></script>
+    <script defer src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/loaders/GLTFLoader.js"></script>
+
+    <!-- App script - loads after Three.js -->
+    <script defer src="app.js"></script>
+</body>
+</html>
