@@ -1,0 +1,129 @@
+/* ─── ResultsPage — WCAG 2.1 AA compliant styles ────────────
+   Color palette (colorblind-safe):
+   Success:  #059669  — low risk
+   Warning:  #d97706  — moderate risk
+   Danger:   #dc2626  — high risk
+   Primary:  #1e40af  — buttons, links
+   ──────────────────────────────────────────────────────────── */
+
+/* PDF download button */
+.results-btn-secondary {
+  width: 100%;
+  padding: 0.85rem;
+  background: #fff;
+  color: #1e40af;
+  border: 2px solid #1e40af;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.results-btn-secondary:hover:not(:disabled) {
+  background: #1e40af;
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.25);
+}
+
+.results-btn-secondary:focus-visible {
+  outline: 3px solid #1e40af;
+  outline-offset: 3px;
+}
+
+.results-btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Retake quiz button */
+.results-btn-primary {
+  width: 100%;
+  padding: 0.85rem;
+  background: linear-gradient(135deg, #1e40af 0%, #2563eb 100%);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(30, 64, 175, 0.3);
+  transition: box-shadow 0.2s ease, transform 0.1s ease, opacity 0.15s ease;
+}
+
+.results-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.35);
+  transform: translateY(-1px);
+}
+
+.results-btn-primary:focus-visible {
+  outline: 3px solid #1e40af;
+  outline-offset: 3px;
+}
+
+/* Section toggle button */
+.results-section-toggle {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: none;
+  border: none;
+  border-bottom: 1px solid #e5e7eb;
+  padding-bottom: 0.5rem;
+  cursor: pointer;
+  text-align: left;
+  transition: opacity 0.15s ease;
+}
+
+.results-section-toggle:hover {
+  opacity: 0.8;
+}
+
+.results-section-toggle:focus-visible {
+  outline: 3px solid #1e40af;
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* Resource links */
+.results-resource-link {
+  font-size: 0.9rem;
+  color: #1e40af;
+  font-weight: 600;
+  text-decoration: none;
+  transition: color 0.15s ease, text-decoration-color 0.15s ease;
+}
+
+.results-resource-link:hover {
+  text-decoration: underline;
+  color: #1d3a9e;
+}
+
+.results-resource-link:focus-visible {
+  outline: 3px solid #1e40af;
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* Skip link for results page */
+.skip-link {
+  position: absolute;
+  top: -100%;
+  left: 1rem;
+  z-index: 9999;
+  padding: 0.75rem 1.25rem;
+  background: #1e40af;
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: 0 0 10px 10px;
+  text-decoration: none;
+  transition: top 0.15s;
+}
+
+.skip-link:focus {
+  top: 0;
+  outline: 3px solid #fff;
+  outline-offset: 2px;
+}

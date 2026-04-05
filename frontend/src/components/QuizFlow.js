@@ -16,6 +16,7 @@
  */
 
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import './QuizFlow.css';
 
 const SCALE = [
   { value: 1, label: 'Never' },
@@ -313,6 +314,7 @@ export default function QuizFlow({ onComplete }) {
                 role="radio"
                 aria-checked={isSelected}
                 tabIndex={0}
+                className="quiz-option"
                 style={s.option(isSelected)}
                 onClick={() => selectAnswer(q.id, value)}
                 onKeyDown={(e) => {
@@ -347,8 +349,8 @@ export default function QuizFlow({ onComplete }) {
         {/* Navigation */}
         <div style={s.nav}>
           <button
+            className="quiz-btn-secondary"
             style={{
-              ...s.btnSecondary,
               ...(isFirst ? s.btnSecondaryDisabled : {}),
             }}
             onClick={goPrev}
@@ -360,10 +362,8 @@ export default function QuizFlow({ onComplete }) {
 
           {isLast ? (
             <button
-              style={{
-                ...s.btnPrimary,
-                ...(!canAdvance ? s.btnPrimaryDisabled : {}),
-              }}
+              className="quiz-btn-primary"
+              style={{ flex: 1 }}
               onClick={handleSubmit}
               disabled={!canAdvance}
               aria-label="Submit your quiz answers"
@@ -373,10 +373,8 @@ export default function QuizFlow({ onComplete }) {
             </button>
           ) : (
             <button
-              style={{
-                ...s.btnPrimary,
-                ...(!canAdvance ? s.btnPrimaryDisabled : {}),
-              }}
+              className="quiz-btn-primary"
+              style={{ flex: 1 }}
               onClick={goNext}
               disabled={!canAdvance}
               aria-label="Go to next question"

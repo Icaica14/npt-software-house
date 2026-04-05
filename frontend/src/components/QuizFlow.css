@@ -1,0 +1,82 @@
+/* ─── QuizFlow — WCAG 2.1 AA compliant styles ────────────────
+   Color palette (colorblind-safe):
+   Primary:  #1e40af  — buttons, links, active states
+   Neutral:  #6b7280  — secondary text, borders
+   Background: #f8fafc
+   ──────────────────────────────────────────────────────────── */
+
+/* Quiz option row — hover + focus states (can't do in inline styles) */
+.quiz-option {
+  transition: border-color 0.15s ease, background 0.15s ease, box-shadow 0.15s ease;
+}
+
+.quiz-option:hover {
+  border-color: #1e40af !important;
+  background: #f0f4ff !important;
+  box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.08);
+}
+
+.quiz-option:focus-visible {
+  outline: 3px solid #1e40af;
+  outline-offset: 2px;
+  border-color: #1e40af !important;
+}
+
+/* Primary button — hover/focus */
+.quiz-btn-primary {
+  background: linear-gradient(135deg, #1e40af 0%, #1e3a8a 100%);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: none;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(30, 64, 175, 0.3);
+  transition: box-shadow 0.2s ease, transform 0.1s ease, opacity 0.15s ease;
+}
+
+.quiz-btn-primary:hover:not(:disabled) {
+  box-shadow: 0 4px 12px rgba(30, 64, 175, 0.35);
+  transform: translateY(-1px);
+}
+
+.quiz-btn-primary:focus-visible {
+  outline: 3px solid #1e40af;
+  outline-offset: 3px;
+}
+
+.quiz-btn-primary:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+/* Secondary button — hover/focus */
+.quiz-btn-secondary {
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  border: 2px solid #e5e7eb;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: #fff;
+  color: #374151;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.quiz-btn-secondary:hover:not(:disabled) {
+  border-color: #9ca3af;
+  background: #f9fafb;
+}
+
+.quiz-btn-secondary:focus-visible {
+  outline: 3px solid #1e40af;
+  outline-offset: 3px;
+}
+
+.quiz-btn-secondary:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}

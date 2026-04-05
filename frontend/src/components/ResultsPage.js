@@ -12,6 +12,7 @@
 
 import React, { useState } from 'react';
 import { generatePDFReport, computeConfidence } from '../utils/reportGenerator';
+import './ResultsPage.css';
 
 /* ─── Constants ─────────────────────────────────────────────────────────── */
 
@@ -143,19 +144,8 @@ function Section({ id, title, children, defaultOpen = true }) {
         id={id}
         onClick={() => setOpen((o) => !o)}
         aria-expanded={open}
-        style={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          background: 'none',
-          border: 'none',
-          borderBottom: '1px solid #e5e7eb',
-          paddingBottom: '0.5rem',
-          marginBottom: open ? '1rem' : 0,
-          cursor: 'pointer',
-          textAlign: 'left',
-        }}
+        className="results-section-toggle"
+        style={{ marginBottom: open ? '1rem' : 0 }}
       >
         <span style={{ fontSize: '0.95rem', fontWeight: 700, color: '#1e3a8a' }}>{title}</span>
         <span style={{ fontSize: '1rem', color: '#6b7280', userSelect: 'none' }} aria-hidden="true">
@@ -188,6 +178,7 @@ export default function ResultsPage({ result, onRetake }) {
 
   return (
     <div style={styles.container}>
+      <a href="#main-content" className="skip-link">Skip to main content</a>
       <div style={styles.wrapper}>
 
         {/* Page heading */}
@@ -335,9 +326,9 @@ export default function ResultsPage({ result, onRetake }) {
                 <div key={r.url} style={styles.resourceItem}>
                   <a
                     href={r.url}
-                    style={styles.resourceLink}
                     target="_blank"
                     rel="noopener noreferrer"
+                    className="results-resource-link"
                     aria-label={`${r.name} (opens in new tab)`}
                   >
                     {r.name} ↗
@@ -374,7 +365,7 @@ export default function ResultsPage({ result, onRetake }) {
             {/* ── Actions ── */}
             <div style={styles.actions}>
               <button
-                style={styles.pdfBtn}
+                className="results-btn-secondary"
                 onClick={handleDownloadPDF}
                 disabled={pdfLoading}
                 aria-label="Download a PDF report of your results"
@@ -382,7 +373,7 @@ export default function ResultsPage({ result, onRetake }) {
                 {pdfLoading ? 'Preparing…' : '⬇ Download PDF Report'}
               </button>
               <button
-                style={styles.retakeBtn}
+                className="results-btn-primary"
                 onClick={onRetake}
                 aria-label="Retake the quiz from the beginning"
               >
