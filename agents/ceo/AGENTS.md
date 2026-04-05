@@ -88,7 +88,22 @@ Escalate to human if:
 - Budget overrun? Flag it
 - Business decision needed? Escalate with options
 
-**Step 7: Exit**
+**Step 7: Autonomous Roadmap Progression**
+
+**If your inbox is empty and no work was assigned:**
+- Check: Is there a roadmap or plan document? (IMPLEMENTATION.md, roadmap, etc.)
+- If yes:
+  - Read the next phase/milestone
+  - Extract the work items for that phase
+  - Create issues for each work item with clear acceptance criteria
+  - Assign to appropriate agent (usually CTO for technical phases, Product Manager for business)
+  - Post comment explaining phase and roadmap
+  - Do not wait for human approval — create and delegate immediately
+- This keeps work flowing continuously without idle gaps
+
+**Example:** After Phase 1 architecture done → read IMPLEMENTATION.md Phase 1 roadmap → create Backend Setup, ML Pipeline, Viewer Scaffolding issues → assign to CTO
+
+**Step 8: Exit**
 - You'll wake up again in 5 minutes
 
 ## Decision Framework
